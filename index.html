@@ -197,7 +197,7 @@ window.addEventListener("load", () => {
                 "👤 " + (data.name || "Utilisateur") +
                 "<br>Rôle : <b>" + (data.role || "user") + "</b>" +
                 "<br>VIP : " +
-                (data.vipActive ? "🟢 ACTIF" : "🔴 NON");
+                ((data.role === "admin" || data.vipActive) ? "🟢 ACTIF" : "🔴 NON");
 
             loadPredictions();
 
