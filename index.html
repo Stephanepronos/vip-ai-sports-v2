@@ -220,46 +220,103 @@ window.addEventListener("load", () => {
 =========================== */
 
 async function loadPredictions() {
-
     const container = document.getElementById("predictions");
-
-    container.innerHTML = "⏳ Génération IA...";
+    container.innerHTML = "⏳ Chargement des vrais matchs...";
 
     try {
+        // 1️⃣ Récupérer les vrais matchs depuis le Worker
+        const fixturesResponse = await fetch(
+            "https://vip-ai-api.sdz-ai.workers.dev/fixtures"
+        );
 
-        const matches = await Engine.generate("free", 3);
+        if (!fixturesResponse.ok) {
+            throw new Error("Impossible de récupérer les matchs");
+        }
 
+        const fixturesData = await fixturesResponse.json();
+        const fixtures = fixturesData.matches || [];
+
+        if (!fixtures.length) {
+            throw new Error("Aucun match disponible");
+        }
+
+        // 2️⃣ Garder uniquement les matchs à venir
+        const upcoming = fixtures.filter(match =>
+            match.homeTeam &&
+            match.awayTeam
+        );
+
+        if (!upcoming.length) {
+            throw new Error("Aucun match à venir");
+        }
+
+        // 3️⃣ Limiter le nombre envoyé à l'IA
+        const selectedMatches = upcoming.slice(0, 15);
+
+        // 4️⃣ Récupérer l'utilisateur Firebase connecté
+        const user = auth.currentUser;
+
+        if (!user) {
+            throw new Error("Utilisateur non connecté");
+        }
+
+        // 5️⃣ Obtenir le Firebase ID Token
+        const idToken = await user.getIdToken(true);
+
+        // 6️⃣ Envoyer les vrais matchs au Worker AI
+        const aiResponse = await fetch(
+            "https://vip-ai-api.sdz-ai.workers.dev/generate",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${idToken}`
+                },
+                body: JSON.stringify({
+                    matches: selectedMatches
+                })
+            }
+        );
+
+        const aiData = await aiResponse.json();
+
+        if (!aiResponse.ok || aiData.status !== "SUCCESS") {
+            throw new Error(
+                aiData.message ||
+                aiData.error ||
+                "Erreur de génération IA"
+            );
+        }
+
+        // 7️⃣ Récupérer les 3 meilleurs pronostics
+        const predictions = aiData.best || [];
+
+        if (!predictions.length) {
+            throw new Error("Aucun pronostic généré");
+        }
+
+        // 8️⃣ Afficher les vrais matchs + pronostics IA
         let html = "";
 
-        matches.forEach(m => {
-
+        predictions.slice(0, 3).forEach(m => {
             html += `
-            <div class="match">
-
-                <b>${m.match}</b><br>
-
-                🎯 ${m.prediction}<br>
-
-                📊 Confiance : ${m.confidence}%
-
-            </div>
+                <div class="match">
+                    <b>${m.match}</b><br>
+                    🎯 ${m.prediction}<br>
+                    📊 Confiance : ${m.confidence}%
+                </div>
             `;
-
         });
 
         container.innerHTML = html;
 
     } catch (e) {
+        console.error("Erreur loadPredictions:", e);
 
-        console.error(e);
-
-        container.innerHTML = "Impossible de charger les pronostics.";
-
+        container.innerHTML =
+            "❌ Impossible de charger les pronostics.";
     }
-
 }
-
-
 /* ===========================
    ROUTAGE VIP
 =========================== */
