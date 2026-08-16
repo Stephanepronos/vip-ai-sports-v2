@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>AI PRONOSTICS - LOGIN</title>
+
+<style>
+body {
+    font-family: Arial;
+    background: #0f172a;
+    color: white;
+    margin: 0;
+}
+
+.container {
+    max-width: 400px;
+    margin: auto;
+    padding: 20px;
+    margin-top: 60px;
+}
+
+.card {
+    background: #1e293b;
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 15px;
+}
+
+input {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+    border-radius: 6px;
+    border: none;
+}
+
+button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.primary { background: #3b82f6; color: white; }
+.green { background: #22c55e; color: white; }
+
+h1 { text-align: center; }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>⚽ AI PRONOSTICS</h1>
+
+<div class="card">
+
+<h3>🔐 Connexion</h3>
+<input id="loginEmail" placeholder="Email">
+<input id="loginPassword" type="password" placeholder="Mot de passe">
+<button class="primary" onclick="login()">Se connecter</button>
+
+</div>
+
+<div class="card">
+
+<h3>📝 Inscription</h3>
+<input id="name" placeholder="Nom complet">
+<input id="whatsapp" placeholder="WhatsApp">
+<input id="email" placeholder="Email">
+<input id="password" type="password" placeholder="Mot de passe">
+<button class="green" onclick="register()">Créer compte</button>
+
+</div>
+
+</div>
+<!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+<!-- FIREBASE CORE -->
+<script src="firebase.js"></script>
+
+<script>
+/* ================= REGISTER ================= */
+async function register() {
+
+    const name = document.getElementById("name").value;
+    const whatsapp = document.getElementById("whatsapp").value;
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    if (!email || !password) {
+        alert("Champs obligatoires");
+        return;
+    }
+
+    try {
+
+        const cred = await window.auth.createUserWithEmailAndPassword(email, password);
+
+        await window.db.collection("users").doc(cred.user.uid).set({
+    uid: cred.user.uid,
+    name,
+    whatsapp,
+    email,
+    role: "user",
+    vipActive: false,
+    vipExpireAt: null,
+    createdAt: Date.now(),
+    updatedAt: Date.now()
+});
+
+        alert("Compte créé ✔");
+
+        window.location.href = "index.html";
+
+    } catch (e) {
+        alert(e.message);
+    }
+}
+
+/* ================= LOGIN ================= */
+async function login() {
+
+    const email = document.getElementById("loginEmail").value;
+    const password = document.getElementById("loginPassword").value;
+
+    try {
+
+        const cred = await window.auth.signInWithEmailAndPassword(email, password);
+
+        const uid = cred.user.uid;
+
+        const doc = await window.db.collection("users").doc(uid).get();
+
+        if (!doc.exists) {
+            alert("Utilisateur introuvable");
+            return;
+        }
+
+        const data = doc.data();
+
+        // 🔥 AUTO ROUTING VIP (IMPORTANT)
+        if (data.vipActive === true && data.role === "vip") {
+            window.location.href = "vip.html";
+            return;
+        }
+
+        window.location.href = "index.html";
+
+    } catch (e) {
+        alert(e.message);
+    }
+}
+
+</script>
+
+</body>
+</html>

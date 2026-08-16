@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI PRONOSTICS - HOME</title>
+
+<style>
+
+body{
+    margin:0;
+    font-family:Arial,sans-serif;
+    background:#0f172a;
+    color:#fff;
+}
+
+header{
+    background:#111827;
+    padding:20px;
+    text-align:center;
+}
+
+.container{
+    max-width:700px;
+    margin:auto;
+    padding:15px;
+}
+
+.card{
+    background:#1e293b;
+    border-radius:12px;
+    padding:15px;
+    margin-bottom:15px;
+    border:1px solid #334155;
+}
+
+button{
+    width:100%;
+    padding:12px;
+    margin-top:10px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+.primary{
+    background:#2563eb;
+    color:white;
+}
+
+.vip{
+    background:linear-gradient(90deg,#fbbf24,#f59e0b);
+    color:#111827;
+}
+
+.logout{
+    background:#ef4444;
+    color:white;
+}
+
+.match{
+    padding:10px;
+    border-bottom:1px solid #334155;
+}
+
+.match:last-child{
+    border-bottom:none;
+}
+
+#status{
+    font-weight:bold;
+    color:#22c55e;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<header>
+
+<h1>⚽ AI PRONOSTICS</h1>
+
+<p>Pronostics gratuits alimentés par Intelligence Artificielle</p>
+
+</header>
+
+<div class="container">
+
+<div class="card">
+
+<h2>👤 Mon statut</h2>
+
+<p id="status">
+Chargement...
+</p>
+
+</div>
+
+<div class="card">
+
+<h2>🔥 Pronostics gratuits</h2>
+
+<div id="predictions">
+
+Chargement...
+
+</div>
+
+<button class="primary"
+onclick="loadPredictions()">
+
+🔄 Actualiser
+
+</button>
+
+</div>
+
+<div class="card">
+
+<h2 style="color:#fbbf24">
+
+💎 VIP PREMIUM
+
+</h2>
+
+<p>
+
+✔ Pronostics IA avancés<br>
+✔ Meilleure précision<br>
+✔ Analyses exclusives
+
+</p>
+
+<button
+class="vip"
+onclick="goVIP()">
+
+🚀 ACCÉDER AU VIP
+
+</button>
+
+</div>
+
+<div class="card">
+
+<button
+class="logout"
+onclick="Auth.logout()">
+
+🚪 Déconnexion
+
+</button>
+
+</div>
+
+</div>
+
+<!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+<!-- CORE -->
+<script src="firebase.js"></script>
+
+<script>
+
+/* ===========================
+   INITIALISATION
+=========================== */
+
+window.addEventListener("load", () => {
+
+    auth.onAuthStateChanged(async (user) => {
+
+        if (!user) {
+            window.location.href = "login.html";
+            return;
+        }
+
+        try {
+
+            const snap = await db.collection("users").doc(user.uid).get();
+
+            if (!snap.exists) {
+                await auth.signOut();
+                window.location.href = "login.html";
+                return;
+            }
+
+            const data = snap.data();
+
+            document.getElementById("status").innerHTML =
+                "👤 " + (data.name || "Utilisateur") +
+                "<br>Rôle : <b>" + (data.role || "user") + "</b>" +
+                "<br>VIP : " +
+                (data.vipActive ? "🟢 ACTIF" : "🔴 NON");
+
+            loadPredictions();
+
+        } catch (e) {
+
+            console.error(e);
+
+            document.getElementById("status").innerHTML =
+                "❌ Erreur Firebase";
+
+        }
+
+    });
+
+});
+
+
+/* ===========================
+   PRONOSTICS GRATUITS
+=========================== */
+
+async function loadPredictions() {
+
+    const container = document.getElementById("predictions");
+
+    container.innerHTML = "⏳ Génération IA...";
+
+    try {
+
+        const matches = await Engine.generate("free", 3);
+
+        let html = "";
+
+        matches.forEach(m => {
+
+            html += `
+            <div class="match">
+
+                <b>${m.match}</b><br>
+
+                🎯 ${m.prediction}<br>
+
+                📊 Confiance : ${m.confidence}%
+
+            </div>
+            `;
+
+        });
+
+        container.innerHTML = html;
+
+    } catch (e) {
+
+        console.error(e);
+
+        container.innerHTML = "Impossible de charger les pronostics.";
+
+    }
+
+}
+
+
+/* ===========================
+   ROUTAGE VIP
+=========================== */
+
+async function goVIP() {
+
+    const user = auth.currentUser;
+
+    if (!user) {
+
+        window.location.href = "login.html";
+        return;
+
+    }
+
+    const snap = await db.collection("users").doc(user.uid).get();
+
+    if (!snap.exists) {
+
+        window.location.href = "login.html";
+        return;
+
+    }
+
+    const data = snap.data();
+
+    if (data.role === "vip" && data.vipActive === true) {
+
+        window.location.href = "vip.html";
+
+    } else {
+
+        window.location.href = "payment.html";
+
+    }
+
+}
+
+</script>
+
+</body>
+</html>

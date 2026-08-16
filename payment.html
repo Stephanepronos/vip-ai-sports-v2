@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>VIP PAYMENT OPTIMIZER</title>
+
+<style>
+
+body{
+    font-family: Arial;
+    background:#0f172a;
+    color:white;
+    margin:0;
+}
+
+.container{
+    padding:20px;
+    max-width:600px;
+    margin:auto;
+}
+
+.card{
+    background:#1e293b;
+    padding:15px;
+    border-radius:10px;
+    margin-bottom:15px;
+    border:1px solid #334155;
+}
+
+button,a{
+    display:block;
+    width:100%;
+    padding:12px;
+    margin-top:10px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    text-align:center;
+    text-decoration:none;
+    color:white;
+    font-weight:bold;
+}
+
+.whatsapp{ background:#22c55e; }
+.pay{ background:#3b82f6; }
+.vip{ background:linear-gradient(90deg,#fbbf24,#f59e0b); color:#0f172a; }
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- 🔥 HEADER -->
+    <div class="card" style="text-align:center;">
+
+        <h1 style="color:#fbbf24;">💎 VIP PAYMENT OPTIMIZER</h1>
+
+        <p style="color:#94a3b8;">
+            Accès IA ML Level 4 • Pronostics avancés
+        </p>
+
+        <div style="color:#22c55e; font-weight:bold;">
+            ✔ 87% précision moyenne
+        </div>
+
+    </div>
+
+    <!-- 💰 VIP INFO -->
+    <div class="card">
+
+        <h2>🚀 VIP Premium</h2>
+
+        <p>✔ Pronostics IA avancés</p>
+        <p>✔ Analyse multi-facteurs</p>
+        <p>✔ Mise à jour en temps réel</p>
+
+        <hr style="border:1px solid #334155;">
+
+        <h3>💳 Paiement Mobile Money</h3>
+
+        <p>📱 MTN : +237 673 406 140</p>
+        <p>📱 Orange : +237 658 854 149</p>
+
+        <h3>💰 Prix</h3>
+        <p><b style="color:#fbbf24;">2000 XAF / 30 jours</b></p>
+
+        <!-- 🔥 URGENCE -->
+        <div style="margin-top:10px; color:#ef4444; font-weight:bold;">
+            ⚠️ VIP limité pour stabilité IA
+        </div>
+
+        <div style="margin-top:10px; color:#fbbf24;">
+            🚨 Places restantes : <span id="slots">12</span>
+        </div>
+
+    </div>
+
+    <!-- 💳 ACTIONS -->
+    <div class="card">
+
+        <p>Après paiement cliquez sur "J’ai payé"</p>
+
+        <a class="whatsapp"
+        href="https://wa.me/237652189950?text=Je%20viens%20de%20payer%20VIP%20voici%20ma%20preuve"
+        target="_blank">
+        💬 Envoyer preuve WhatsApp
+        </a>
+
+        <button class="pay" onclick="sendRequest()">
+            ✅ J’AI PAYÉ
+        </button>
+
+        <button onclick="window.location.href='index.html'" style="background:#ef4444;">
+            ⬅ Retour
+        </button>
+
+    </div>
+
+    <!-- 🔐 STATUS -->
+    <div class="card" style="text-align:center;">
+        <p id="status" style="color:#94a3b8;">Chargement...</p>
+    </div>
+
+</div>
+
+<!-- ================= FIREBASE ================= -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+<script src="firebase.js"></script>
+
+<script>
+/* ================= VIP ACCESS CHECK ================= */
+
+auth.onAuthStateChanged(async (user) => {
+
+    if (!user) {
+        window.location.href = "login.html";
+        return;
+    }
+
+    try {
+
+        const snap = await db.collection("users").doc(user.uid).get();
+
+        if (!snap.exists) {
+            await auth.signOut();
+            window.location.href = "login.html";
+            return;
+        }
+
+        const data = snap.data();
+
+        // 🛡 ADMIN
+        if (data.role === "admin") {
+            window.location.href = "vip.html";
+            return;
+        }
+
+        // 💎 VIP
+        if (data.role === "vip" && data.vipActive === true) {
+            window.location.href = "vip.html";
+            return;
+        }
+
+        // 👤 USER
+        document.getElementById("status").innerText =
+            "Statut : USER • prêt pour upgrade VIP";
+
+    } catch (e) {
+
+        console.error("AUTH ERROR :", e);
+
+        document.getElementById("status").innerText =
+            "Erreur Firebase";
+
+    }
+
+});
+
+
+/* ================= PAYMENT OPTIMIZER ENGINE ================= */
+
+let requestLock = false;
+
+async function sendRequest() {
+
+    if (requestLock) return;
+
+    requestLock = true;
+
+    try {
+
+        const user = auth.currentUser;
+
+        if (!user) {
+
+            alert("Non connecté");
+
+            window.location.href = "login.html";
+
+            return;
+
+        }
+
+        const userRef = db.collection("users").doc(user.uid);
+        const userSnap = await userRef.get();
+
+        if (!userSnap.exists) {
+
+            alert("Utilisateur introuvable");
+
+            return;
+
+        }
+
+        const data = userSnap.data();
+
+        // 🛡 ADMIN
+        if (data.role === "admin") {
+
+            alert("🛡 Compte administrateur");
+
+            window.location.href = "vip.html";
+
+            return;
+
+        }
+
+        // 💎 DÉJÀ VIP
+        if (data.role === "vip" && data.vipActive === true) {
+
+            alert("✔ Vous êtes déjà VIP");
+
+            window.location.href = "vip.html";
+
+            return;
+
+        }
+
+        // ⏳ Demande déjà en cours
+        const existing = await db.collection("vip_requests")
+            .where("uid", "==", user.uid)
+            .where("status", "==", "pending")
+            .get();
+
+        if (!existing.empty) {
+
+            alert("⏳ Une demande est déjà en cours");
+
+            return;
+
+        }
+
+        // ✅ Création de la demande
+        await db.collection("vip_requests").add({
+
+            uid: user.uid,
+
+            name: data.name || "",
+
+            email: data.email || user.email || "",
+
+            whatsapp: data.whatsapp || "",
+
+            role: data.role || "user",
+
+            vipActive: false,
+
+            status: "pending",
+
+            createdAt: Date.now(),
+
+            updatedAt: Date.now()
+
+        });
+
+        alert("✔ Demande envoyée avec succès");
+
+    } catch (e) {
+
+        console.error("PAYMENT ERROR :", e);
+
+        alert("Erreur paiement");
+
+    } finally {
+
+        requestLock = false;
+
+    }
+
+}
+/* ================= URGENCY ENGINE ================= */
+
+setInterval(() => {
+
+    const el = document.getElementById("slots");
+    if (!el) return;
+
+    let v = parseInt(el.innerText);
+
+    if (v > 3) {
+        v -= Math.random() > 0.6 ? 1 : 0;
+        el.innerText = v;
+    }
+
+}, 15000);
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,3534 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>VIP ADMIN PANEL</title>
+
+<style>
+
+body{
+    margin:0;
+    font-family:Arial,sans-serif;
+    background:#0f172a;
+    color:white;
+}
+
+
+.container{
+    max-width:1100px;
+    margin:auto;
+    padding:20px;
+}
+
+
+.card{
+    background:#1e293b;
+    padding:20px;
+    border-radius:12px;
+    margin-bottom:15px;
+}
+
+
+input{
+    width:100%;
+    padding:12px;
+    margin:8px 0;
+    border-radius:8px;
+    border:none;
+}
+
+
+button{
+    padding:12px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    background:#2563eb;
+    color:white;
+    font-weight:bold;
+}
+
+
+button:hover{
+    opacity:0.85;
+}
+
+
+#loginBox{
+
+    width:320px;
+    margin:80px auto;
+
+}
+
+
+#dashboard{
+
+    display:none;
+
+}
+
+
+header{
+
+    background:#111827;
+    padding:15px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+}
+
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<!-- =========================
+        LOGIN ADMIN
+========================= -->
+
+
+<div id="loginBox" class="card">
+
+
+<h2>🔐 Admin Login</h2>
+
+
+<input 
+type="email" 
+id="email" 
+placeholder="Email admin">
+
+
+<input 
+type="password" 
+id="password" 
+placeholder="Mot de passe">
+
+
+<button onclick="login()">
+Connexion
+</button>
+
+
+<p id="loginMsg"></p>
+
+
+</div>
+
+
+
+
+
+<!-- =========================
+        DASHBOARD
+========================= -->
+
+
+<div id="dashboard">
+
+
+<header>
+
+<h2>
+💎 VIP ADMIN PANEL
+</h2>
+
+
+<button onclick="logout()">
+🚪 Déconnexion
+</button>
+
+
+</header>
+
+
+
+<div class="container">
+<div class="card">
+
+<h3>📊 Statistiques</h3>
+
+<p>👥 Utilisateurs :
+<b id="totalUsers">0</b>
+</p>
+
+
+<p>💎 VIP actifs :
+<b id="vipUsers">0</b>
+</p>
+
+
+<p>⏳ Demandes en attente :
+<b id="pendingReq">0</b>
+</p>
+
+
+<p>📥 Total demandes :
+<b id="totalReq">0</b>
+</p>
+
+
+</div>
+
+
+<div class="card">
+
+<h3>📥 Demandes VIP</h3>
+
+<div id="requests">
+Chargement...
+</div>
+
+</div>
+
+<div class="card">
+
+<h2>🟢 Tableau de bord Live</h2>
+
+<p>👥 Utilisateurs connectés :
+<b id="onlineUsers">0</b>
+</p>
+
+<p>💎 VIP connectés :
+<b id="onlineVip">0</b>
+</p>
+
+<p>🕒 Dernière activité :
+<b id="lastActivity">-</b>
+</p>
+
+</div>
+<div class="card">
+  
+  <div class="card">
+
+<h2>💰 Revenus VIP</h2>
+
+<p>
+💵 Aujourd'hui :
+<b id="todayRevenue">0 XAF</b>
+</p>
+
+<p>
+📅 Cette semaine :
+<b id="weekRevenue">0 XAF</b>
+</p>
+
+<p>
+📆 Ce mois :
+<b id="monthRevenue">0 XAF</b>
+</p>
+
+<p>
+💎 Total :
+<b id="totalRevenue">0 XAF</b>
+</p>
+
+</div>
+
+
+
+<div class="card">
+
+<h2>📦 Abonnements VIP</h2>
+
+<p>
+🟢 Aujourd'hui :
+<b id="todayVipCount">0</b>
+</p>
+
+<p>
+📅 Cette semaine :
+<b id="weekVipCount">0</b>
+</p>
+
+<p>
+📆 Ce mois :
+<b id="monthVipCount">0</b>
+</p>
+
+<p>
+💎 Total :
+<b id="totalVipCount">0</b>
+</p>
+
+</div>
+<div class="card">
+
+<h2>💎 Plans VIP</h2>
+
+
+<p>
+⚡ 1 Jour :
+<b id="vip1Day">0</b>
+vendu(s)
+<br>
+💰 <b id="revenue1Day">0 XAF</b>
+</p>
+
+
+<p>
+🔥 7 Jours :
+<b id="vip7Days">0</b>
+vendu(s)
+<br>
+💰 <b id="revenue7Days">0 XAF</b>
+</p>
+
+
+<p>
+👑 30 Jours :
+<b id="vip30Days">0</b>
+vendu(s)
+<br>
+💰 <b id="revenue30Days">0 XAF</b>
+</p>
+
+
+</div>
+
+
+<h2>📜 Historique VIP</h2>
+
+<div id="vipHistory">
+
+Chargement...
+
+</div>
+
+</div>
+
+<div class="card">
+
+<h2>👥 Gestion des utilisateurs</h2>
+
+
+<input
+type="text"
+id="searchUser"
+placeholder="🔍 Rechercher un utilisateur..."
+onkeyup="filterUsers()"
+style="margin-bottom:10px;"
+>
+
+
+<select
+id="userFilter"
+onchange="filterUsers()"
+style="margin-bottom:10px;"
+>
+
+<option value="all">
+Tous les utilisateurs
+</option>
+
+<option value="vip">
+💎 VIP actifs
+</option>
+
+<option value="user">
+👤 Utilisateurs simples
+</option>
+
+<option value="expired">
+⏳ VIP expirés
+</option>
+
+</select>
+
+
+<div id="usersList">
+Chargement...
+</div>
+
+
+</div>
+
+
+
+<div class="card">
+
+<h2>📈 Conversion VIP</h2>
+
+
+<p>
+👥 Utilisateurs totaux :
+<b id="totalUsersCount">0</b>
+</p>
+
+
+<p>
+💎 VIP actifs :
+<b id="activeVipCount">0</b>
+</p>
+
+
+<p>
+🎯 Taux de conversion :
+<b id="vipConversionRate">0%</b>
+</p>
+
+
+<p>
+⏳ VIP expirés :
+<b id="expiredVipCount">0</b>
+</p>
+
+
+</div>
+
+
+
+<div class="card">
+
+<h2>🔔 Alertes VIP</h2>
+
+
+<div id="vipAlerts">
+Chargement...
+</div>
+
+
+</div>
+
+
+
+<div class="card">
+
+<h2>🔔 Centre de notifications</h2>
+
+
+<input
+type="text"
+id="notifTitle"
+placeholder="Titre"
+style="width:100%;margin-bottom:10px;"
+>
+
+
+<textarea
+id="notifMessage"
+placeholder="Message de la notification"
+style="width:100%;height:100px;margin-bottom:10px;"
+></textarea>
+
+
+<select id="notifType" style="width:100%;margin-bottom:10px;">
+
+<option value="info">
+ℹ️ Information
+</option>
+
+<option value="important">
+⚠️ Important
+</option>
+
+<option value="urgent">
+🚨 Urgent
+</option>
+
+</select>
+
+
+<button onclick="publishNotification()">
+📢 Publier la notification
+</button>
+
+
+<hr>
+
+
+<div id="notificationsAdmin">
+Chargement...
+</div>
+
+
+</div>
+
+
+
+<div class="card">
+
+<h3>🤖 Intelligence Artificielle</h3>
+
+
+<button onclick="generateAI()">
+🔄 Générer les pronostics VIP
+</button>
+
+
+<p id="aiStatus">
+IA prête
+</p>
+
+
+</div>
+<button onclick="testApiFootball()">
+⚽ Tester API-Football
+</button>
+
+<button onclick="testApiFootballFixture()">
+⚽ Tester vrais matchs
+</button>
+
+
+<div class="card">
+
+<h3>
+✅ Admin connecté
+</h3>
+
+
+<p id="adminEmail"></p>
+
+
+</div>
+
+<!-- FIREBASE -->
+
+
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+
+
+
+<script>
+
+
+// =========================
+// FIREBASE CONFIG
+// =========================
+
+
+const firebaseConfig = {
+
+apiKey:"AIzaSyCZXO3lcRCbQyP3vMIruED22RlXia5bkt8",
+
+authDomain:"vip-pronostics.firebaseapp.com",
+
+projectId:"vip-pronostics",
+
+storageBucket:"vip-pronostics.appspot.com",
+
+messagingSenderId:"27928000277",
+
+appId:"1:27928000277:web:2bc67e62934e10319b9b1c"
+
+};
+
+
+firebase.initializeApp(firebaseConfig);
+
+
+const auth = firebase.auth();
+
+const db = firebase.firestore();
+
+
+
+
+
+// =========================
+// LOGIN ADMIN
+// =========================
+
+
+async function login(){
+
+
+const email =
+document.getElementById("email").value.trim();
+
+
+const password =
+document.getElementById("password").value.trim();
+
+
+
+if(!email || !password){
+
+alert("Remplir tous les champs");
+return;
+
+}
+
+
+
+try{
+
+
+const result =
+await auth.signInWithEmailAndPassword(
+email,
+password
+);
+
+
+
+const user = result.user;
+
+
+
+const snap =
+await db.collection("users")
+.doc(user.uid)
+.get();
+
+
+
+if(!snap.exists){
+
+alert("Utilisateur introuvable");
+
+await auth.signOut();
+
+return;
+
+}
+
+
+
+const data = snap.data();
+
+
+
+if(data.role !== "admin"){
+
+
+alert("❌ Accès refusé : vous n'êtes pas admin");
+
+
+await auth.signOut();
+
+return;
+
+
+}
+
+
+
+
+showDashboard(data);
+
+
+
+}
+catch(e){
+
+console.error(e);
+
+alert(e.message);
+
+}
+
+
+}
+
+
+
+
+
+// =========================
+// AFFICHAGE DASHBOARD
+// =========================
+
+
+function showDashboard(data){
+
+
+document.getElementById("loginBox")
+.style.display="none";
+
+
+document.getElementById("dashboard")
+.style.display="block";
+
+
+document.getElementById("adminEmail")
+.innerHTML =
+"Connecté : "+auth.currentUser.email;
+
+
+startLiveStats();
+
+loadUsers();
+
+loadRequests();
+
+checkVipExpiration();
+
+loadVipHistory();
+
+loadNotificationsAdmin();
+
+loadRevenueStats();
+
+loadVipConversion();
+
+loadVipAlerts();
+
+console.log("ADMIN READY ✔");
+
+
+}
+
+
+
+
+// =========================
+// AUTO VERIFICATION SESSION
+// =========================
+
+
+auth.onAuthStateChanged(async user=>{
+
+
+if(user){
+
+
+const snap =
+await db.collection("users")
+.doc(user.uid)
+.get();
+
+
+
+if(snap.exists && snap.data().role==="admin"){
+
+
+showDashboard(
+snap.data()
+);
+
+
+}
+
+
+}
+
+
+});
+
+// =========================
+// APPROVE VIP
+// =========================
+
+async function approve(requestId, uid){
+
+
+try{
+
+
+if(!requestId || !uid){
+
+alert("❌ ID ou UID manquant");
+return;
+
+}
+
+
+
+const userRef =
+db.collection("users").doc(uid);
+
+
+const requestRef =
+db.collection("vip_requests").doc(requestId);
+
+
+
+// Vérifier utilisateur
+
+const userSnap =
+await userRef.get();
+
+
+
+if(!userSnap.exists){
+
+alert("❌ Utilisateur introuvable");
+return;
+
+}
+
+
+
+const userData =
+userSnap.data();
+
+
+
+// Protection admin
+
+if(userData.role === "admin"){
+
+alert("❌ Impossible de modifier un admin");
+return;
+
+}
+
+
+
+// Déjà VIP
+
+if(
+userData.role === "vip" &&
+userData.vipActive === true
+){
+
+
+await requestRef.update({
+
+status:"approved",
+
+processedAt:Date.now()
+
+});
+
+
+alert("⚠️ Cet utilisateur est déjà VIP");
+
+return;
+
+}
+
+
+
+// Durée VIP : 30 jours
+
+const expireAt =
+Date.now() + (30 * 24 * 60 * 60 * 1000);
+
+
+
+// Activation VIP
+
+await userRef.update({
+
+role:"vip",
+
+vipActive:true,
+
+vip:true,
+
+vipExpireAt:expireAt,
+
+updatedAt:Date.now()
+
+});
+
+
+
+// Validation demande
+
+await requestRef.update({
+
+status:"approved",
+
+processedAt:Date.now(),
+
+approvedAt:Date.now()
+
+});
+
+
+
+alert("✅ VIP activé avec succès");
+
+
+
+}
+catch(e){
+
+
+console.error(
+"APPROVE ERROR:",
+e
+);
+
+
+alert("❌ Erreur activation VIP");
+
+
+}
+
+
+}
+
+
+
+
+
+// =========================
+// REJECT VIP
+// =========================
+
+
+async function reject(requestId){
+
+
+try{
+
+
+if(!requestId){
+
+alert("❌ ID manquant");
+
+return;
+
+}
+
+
+
+const requestRef =
+db.collection("vip_requests")
+.doc(requestId);
+
+
+
+const snap =
+await requestRef.get();
+
+
+
+if(!snap.exists){
+
+alert("❌ Demande inexistante");
+
+return;
+
+}
+
+
+
+const data =
+snap.data();
+
+
+
+if(data.status === "rejected"){
+
+alert("⚠️ Déjà rejetée");
+
+return;
+
+}
+
+
+
+await requestRef.update({
+
+status:"rejected",
+
+processedAt:Date.now()
+
+});
+
+
+
+alert("❌ Demande rejetée");
+
+
+
+}
+catch(e){
+
+
+console.error(
+"REJECT ERROR:",
+e
+);
+
+
+alert("❌ Erreur rejet");
+
+
+}
+
+
+}
+
+
+
+
+// =========================
+// LOGOUT
+// =========================
+
+
+async function logout(){
+
+
+await auth.signOut();
+
+
+window.location.href="login.html";
+
+
+}
+
+// =========================
+// STATISTIQUES LIVE
+// =========================
+
+function startLiveStats(){
+
+
+db.collection("users")
+.onSnapshot(snapshot=>{
+
+
+let vip = 0;
+
+
+snapshot.forEach(doc=>{
+
+
+const data = doc.data();
+
+
+
+if(
+    data.vipActive === true &&
+    data.vipExpireAt &&
+    data.vipExpireAt > Date.now()
+){
+
+    vip++;
+
+}
+
+
+
+});
+
+
+
+document.getElementById("totalUsers")
+.innerText = snapshot.size;
+
+
+document.getElementById("vipUsers")
+.innerText = vip;
+
+
+
+});
+
+
+
+
+
+db.collection("vip_requests")
+.onSnapshot(snapshot=>{
+
+
+let pending = 0;
+
+
+snapshot.forEach(doc=>{
+
+
+const data = doc.data();
+
+
+
+if(data.status === "pending"){
+
+pending++;
+
+}
+
+
+
+});
+
+
+
+document.getElementById("totalReq")
+.innerText = snapshot.size;
+
+
+document.getElementById("pendingReq")
+.innerText = pending;
+
+
+
+});
+
+
+}
+
+// =========================
+// GESTION DES UTILISATEURS
+// =========================
+
+let allUsers = [];
+let filteredUsers = [];
+
+
+function loadUsers(){
+
+const box = document.getElementById("usersList");
+
+
+db.collection("users")
+.onSnapshot(snapshot=>{
+
+
+allUsers = [];
+
+
+
+snapshot.forEach(doc=>{
+
+
+allUsers.push({
+
+uid: doc.id,
+
+...doc.data()
+
+});
+
+
+});
+
+
+
+// Affichage initial de tous les utilisateurs
+
+displayUsers(allUsers);
+
+
+
+}, error=>{
+
+
+console.error(
+"Erreur users :",
+error
+);
+
+
+box.innerHTML =
+"Erreur : " + error.message;
+
+
+
+});
+
+
+}
+
+function displayUsers(users){
+
+const box = document.getElementById("usersList");
+
+let html = "";
+
+users.forEach(user=>{
+
+
+html += `
+
+<div class="card">
+
+<p>
+👤 ${user.name || "Sans nom"}
+</p>
+
+
+<p>
+📧 ${user.email || "-"}
+</p>
+
+
+<p>
+🔐 Role : ${user.role || "user"}
+</p>
+
+<p>
+VIP :
+
+${
+user.role === "admin"
+
+?
+
+"🛡 Compte administrateur"
+
+:
+
+user.vipActive === true
+
+?
+
+`
+✅ Actif
+
+<br>
+
+${
+user.vipExpireAt
+
+?
+
+"📅 Expire le : " +
+new Date(user.vipExpireAt)
+.toLocaleDateString("fr-FR")
+
+:
+
+""
+
+}
+
+
+<br>
+
+
+${
+user.vipExpireAt
+
+?
+
+"⏳ Restant : " +
+Math.ceil(
+(user.vipExpireAt - Date.now())
+/
+(24*60*60*1000)
+)
++
+" jour(s)"
+
+:
+
+""
+
+}
+
+`
+
+:
+
+"❌ Non"
+
+}
+
+</p>
+
+
+${
+user.role === "admin"
+
+?
+
+""
+
+:
+
+user.role === "vip" && user.vipActive === true
+
+?
+
+`
+
+<button onclick="renewVip('${user.uid}')">
+🔄 Renouveler VIP
+</button>
+
+
+<button onclick="removeVip('${user.uid}')">
+🚫 Retirer VIP
+</button>
+
+`
+
+:
+
+`
+
+<select id="duration-${user.uid}">
+
+<option value="1">
+1 Jour
+</option>
+
+<option value="7">
+7 Jours
+</option>
+
+<option value="30" selected>
+30 Jours
+</option>
+
+</select>
+
+
+<button onclick="giveVip('${user.uid}')">
+💎 Activer VIP
+</button>
+
+`
+
+}
+
+
+</div>
+
+`;
+
+});
+
+
+box.innerHTML =
+html || "Aucun utilisateur";
+
+
+}
+
+
+
+function filterUsers(){
+
+const search =
+document.getElementById("searchUser")
+.value
+.toLowerCase();
+
+
+const filter =
+document.getElementById("userFilter")
+.value;
+
+
+
+filteredUsers = allUsers.filter(user=>{
+
+
+// Recherche nom/email/rôle
+
+const matchSearch =
+
+(user.name || "")
+.toLowerCase()
+.includes(search)
+
+||
+
+(user.email || "")
+.toLowerCase()
+.includes(search)
+
+||
+
+(user.role || "")
+.toLowerCase()
+.includes(search);
+
+
+
+if(!matchSearch){
+
+return false;
+
+}
+
+
+
+// Filtre VIP actifs
+
+if(filter === "vip"){
+
+return (
+user.vipActive === true &&
+user.vipExpireAt &&
+user.vipExpireAt > Date.now()
+);
+
+}
+
+
+
+// Filtre utilisateurs simples
+
+if(filter === "user"){
+
+return (
+user.role === "user"
+);
+
+}
+
+
+
+// Filtre VIP expirés
+
+if(filter === "expired"){
+
+return (
+user.vipExpireAt &&
+user.vipExpireAt <= Date.now()
+);
+
+}
+
+
+
+// Tous
+
+return true;
+
+
+});
+
+
+displayUsers(filteredUsers);
+
+
+}
+
+
+
+// =========================
+// ACTIVER VIP
+// =========================
+
+async function giveVip(uid){
+
+try{
+
+
+// =========================
+// Vérifier utilisateur
+// =========================
+
+const userSnap = await db.collection("users")
+.doc(uid)
+.get();
+
+
+if(!userSnap.exists){
+
+alert("Utilisateur introuvable");
+return;
+
+}
+
+
+const userData = userSnap.data();
+
+
+// =========================
+// Récupérer durée VIP
+// =========================
+
+const select = document.getElementById("duration-"+uid);
+
+
+if(!select){
+
+alert("Durée VIP introuvable");
+return;
+
+}
+
+
+const days = Number(select.value);
+
+
+if(!days || days <= 0){
+
+alert("Durée invalide");
+return;
+
+}
+
+
+// =========================
+// Calcul expiration
+// =========================
+
+const now = Date.now();
+
+const expireAt = now + 
+(days * 24 * 60 * 60 * 1000);
+
+
+
+// =========================
+// Calcul montant
+// =========================
+
+let amount = 2000;
+
+
+if(days === 1){
+
+    amount = 1000;
+
+}
+else if(days === 7){
+
+    amount = 5000;
+
+}
+else if(days === 30){
+
+    amount = 20000;
+
+}
+
+
+
+// =========================
+// Activation VIP utilisateur
+// =========================
+
+await db.collection("users")
+.doc(uid)
+.update({
+
+    role:"vip",
+
+    vip:true,
+
+    vipActive:true,
+
+    vipDuration:days,
+
+    vipExpireAt:expireAt,
+
+    lastVipAmount:amount,
+
+    lastVipPaymentAt:now,
+
+    updatedAt:now
+
+});
+
+
+
+
+// =========================
+// Historique VIP
+// =========================
+
+await db.collection("vip_history")
+.add({
+
+    uid:uid,
+
+    name:userData.name || "Sans nom",
+
+    email:userData.email || "-",
+
+    action:"VIP_ACTIVATED",
+
+    duration:days,
+
+    amount:amount,
+
+    expireAt:expireAt,
+
+    admin:auth.currentUser 
+        ? auth.currentUser.email 
+        : "admin",
+
+    createdAt:now
+
+});
+
+
+
+
+// =========================
+// Mise à jour demande paiement
+// (si elle existe)
+// =========================
+
+const requestSnap = await db.collection("vip_requests")
+.where("uid","==",uid)
+.where("status","==","pending")
+.get();
+
+
+requestSnap.forEach(async(doc)=>{
+
+await db.collection("vip_requests")
+.doc(doc.id)
+.update({
+
+status:"approved",
+
+approvedAt:now,
+
+approvedBy:
+auth.currentUser 
+? auth.currentUser.email 
+: "admin"
+
+});
+
+});
+
+
+
+// =========================
+// Message succès
+// =========================
+
+alert(
+"✅ VIP activé pour "+days+" jour(s)\n💰 Montant : "+amount+" XAF"
+);
+
+
+// Recharger la liste si la fonction existe
+
+if(typeof loadUsers === "function"){
+
+loadUsers();
+
+}
+
+
+if(typeof loadStats === "function"){
+
+loadStats();
+
+}
+
+
+}
+catch(e){
+
+
+console.error(
+"VIP ERROR:",
+e
+);
+
+
+alert(
+"❌ Erreur activation VIP : "+e.message
+);
+
+
+}
+
+}
+// =========================
+// RETIRER VIP
+// =========================
+
+async function removeVip(uid){
+
+try{
+
+
+await db.collection("users")
+.doc(uid)
+.update({
+
+role:"user",
+
+vip:false,
+
+vipActive:false,
+
+vipExpireAt:null,
+
+updatedAt:Date.now()
+
+});
+
+
+alert("🚫 VIP retiré");
+
+
+}
+catch(e){
+
+console.error(e);
+
+alert("❌ Erreur retrait VIP");
+
+}
+
+}
+// =========================
+// DEMANDES VIP LIVE
+// =========================
+
+
+function loadRequests(){
+
+const box = document.getElementById("requests");
+
+console.log("BOX REQUESTS :", box);
+
+
+db.collection("vip_requests")
+.onSnapshot(snapshot=>{
+
+
+let html = "";
+
+
+
+snapshot.forEach(doc=>{
+
+
+const d = doc.data();
+
+
+
+let buttons = "";
+
+
+
+if(d.status === "pending"){
+
+
+buttons = `
+
+<button onclick="approve('${doc.id}','${d.uid || ""}')">
+✅ Approve
+</button>
+
+
+<button onclick="reject('${doc.id}')">
+❌ Reject
+</button>
+
+`;
+
+
+}else{
+
+
+buttons = `
+
+<p>
+🔒 Demande traitée
+</p>
+
+`;
+
+}
+
+
+
+// =========================
+// Gestion date sécurisée
+// =========================
+
+let requestDate = "-";
+
+
+if(d.createdAt){
+
+const date = new Date(
+Number(d.createdAt)
+);
+
+
+if(!isNaN(date.getTime())){
+
+requestDate =
+date.toLocaleString("fr-FR");
+
+}
+else{
+
+requestDate =
+"Date invalide";
+
+}
+
+
+}
+
+
+
+
+html += `
+
+<div class="card">
+
+
+<h3>
+💎 Demande VIP
+</h3>
+
+
+<p>
+📧 Email :
+${d.email || "-"}
+</p>
+
+
+<p>
+📱 WhatsApp :
+${d.whatsapp || "-"}
+</p>
+
+
+<p>
+💳 Transaction :
+${d.transactionId || "-"}
+</p>
+
+
+<p>
+📌 Statut :
+<b>
+${d.status || "pending"}
+</b>
+</p>
+
+
+<p>
+📅 Date :
+${requestDate}
+</p>
+
+
+${buttons}
+
+
+</div>
+
+
+`;
+
+
+
+});
+
+
+
+box.innerHTML =
+html || "Aucune demande";
+
+
+
+},
+error=>{
+
+
+console.error(
+"Erreur demandes VIP :",
+error
+);
+
+
+box.innerHTML =
+"Erreur chargement : " + error.message;
+
+
+});
+
+
+}
+
+
+function checkVipExpiration(){
+
+db.collection("users")
+.where("vipActive","==",true)
+.onSnapshot(snapshot=>{
+
+
+snapshot.forEach(async doc=>{
+
+
+const user = doc.data();
+
+
+
+if(
+    user.vipExpireAt &&
+    user.vipExpireAt < Date.now()
+){
+
+
+try{
+
+
+// =========================
+// Désactivation VIP
+// =========================
+
+await db.collection("users")
+.doc(doc.id)
+.update({
+
+role:"user",
+
+vip:false,
+
+vipActive:false,
+
+vipDuration:null,
+
+vipExpireAt:null,
+
+updatedAt:Date.now()
+
+});
+
+
+
+
+// =========================
+// Historique expiration
+// =========================
+
+await db.collection("vip_history")
+.add({
+
+uid:doc.id,
+
+name:user.name || "Sans nom",
+
+email:user.email || "-",
+
+action:"VIP_EXPIRED",
+
+duration:user.vipDuration || 0,
+
+admin:"SYSTEM",
+
+createdAt:Date.now()
+
+});
+
+
+
+console.log(
+"VIP expiré :",
+user.email
+);
+
+
+
+}
+catch(error){
+
+
+console.error(
+"Erreur expiration VIP :",
+error
+);
+
+
+}
+
+
+
+}
+
+
+});
+
+
+});
+
+
+}
+
+
+// =========================
+// HISTORIQUE VIP
+// =========================
+
+function loadVipHistory(){
+
+const box =
+document.getElementById("vipHistory");
+
+
+db.collection("vip_history")
+.orderBy("createdAt","desc")
+.onSnapshot(snapshot=>{
+
+
+let html = "";
+
+
+snapshot.forEach(doc=>{
+
+
+const d = doc.data();
+
+
+html += `
+
+<div class="card">
+
+<p>
+👤 ${d.name || "Sans nom"}
+</p>
+
+<p>
+📧 ${d.email || "-"}
+</p>
+
+<p>
+📌 Action :
+<b>${d.action || "-"}</b>
+</p>
+
+
+<p>
+
+⏳ Durée :
+${d.duration || "-"} jour(s)
+
+</p>
+
+
+<p>
+🛡 Admin :
+${d.admin || "-"}
+</p>
+
+
+<p>
+📅 Date :
+${
+d.createdAt
+?
+new Date(d.createdAt).toLocaleString()
+:
+"-"
+}
+</p>
+
+
+</div>
+
+`;
+
+});
+
+
+box.innerHTML =
+html || "Aucun historique";
+
+
+},error=>{
+
+
+console.error(
+"Erreur historique :",
+error
+);
+
+
+box.innerHTML =
+"Erreur : "+error.message;
+
+
+});
+
+
+}
+
+
+// =========================
+// 📢 PUBLIER UNE NOTIFICATION
+// =========================
+
+async function publishNotification(){
+
+    const title = document.getElementById("notifTitle").value.trim();
+    const message = document.getElementById("notifMessage").value.trim();
+    const type = document.getElementById("notifType").value;
+
+    if(!title || !message){
+
+        alert("Remplissez tous les champs.");
+        return;
+
+    }
+
+    try{
+
+        await db.collection("notifications").add({
+
+            title: title,
+            message: message,
+            type: type,
+            active: true,
+            createdAt: Date.now()
+
+        });
+
+        document.getElementById("notifTitle").value = "";
+        document.getElementById("notifMessage").value = "";
+        document.getElementById("notifType").value = "info";
+
+        alert("✅ Notification publiée");
+
+    }catch(e){
+
+        console.error(e);
+        alert(e.message);
+
+    }
+
+}
+
+
+
+// =========================
+// 📜 LISTE DES NOTIFICATIONS
+// =========================
+
+function loadNotificationsAdmin(){
+
+    const box = document.getElementById("notificationsAdmin");
+
+    db.collection("notifications")
+    .orderBy("createdAt","desc")
+    .onSnapshot(snapshot=>{
+
+        let html = "";
+
+        snapshot.forEach(doc=>{
+
+            const d = doc.data();
+
+            html += `
+
+            <div class="card">
+
+                <h3>🔔 ${d.title}</h3>
+
+                <p>${d.message}</p>
+
+                <p>
+📌 ${
+    d.type === "urgent"
+        ? "🚨 Urgent"
+        : d.type === "important"
+        ? "⚠️ Important"
+        : "ℹ️ Information"
+}
+</p>
+
+                <p>
+                ${d.createdAt
+                    ? new Date(d.createdAt).toLocaleString()
+                    : "-"
+                }
+                </p>
+
+                <button onclick="deleteNotification('${doc.id}')">
+                🗑 Supprimer
+                </button>
+
+            </div>
+
+            `;
+
+        });
+
+        box.innerHTML = html || "Aucune notification";
+
+    });
+
+}
+
+
+
+// =========================
+// 🗑 SUPPRIMER UNE NOTIFICATION
+// =========================
+
+async function deleteNotification(id){
+
+    if(!confirm("Supprimer cette notification ?")) return;
+
+    try{
+
+        await db.collection("notifications").doc(id).delete();
+
+        alert("✅ Notification supprimée");
+
+    }catch(e){
+
+        console.error(e);
+        alert(e.message);
+
+    }
+
+}
+
+function startLiveStats(){
+
+    // =========================
+    // UTILISATEURS
+    // =========================
+
+    db.collection("users")
+    .onSnapshot(snapshot=>{
+
+        let totalUsers = 0;
+        let vipUsers = 0;
+
+        let onlineUsers = 0;
+        let onlineVip = 0;
+
+        let lastActivity = 0;
+
+
+        snapshot.forEach(doc=>{
+
+            const u = doc.data();
+
+
+            totalUsers++;
+
+
+
+            // =========================
+            // VIP ACTIF
+            // =========================
+
+            if(
+                u.vipActive === true &&
+                u.vipExpireAt &&
+                u.vipExpireAt > Date.now()
+            ){
+
+                vipUsers++;
+
+            }
+
+
+
+            // =========================
+            // UTILISATEURS EN LIGNE
+            // =========================
+
+            if(u.online === true){
+
+                onlineUsers++;
+
+
+                if(
+                    u.vipActive === true &&
+                    u.vipExpireAt &&
+                    u.vipExpireAt > Date.now()
+                ){
+
+                    onlineVip++;
+
+                }
+
+
+
+                if(
+                    u.lastSeen &&
+                    u.lastSeen > lastActivity
+                ){
+
+                    lastActivity = u.lastSeen;
+
+                }
+
+            }
+
+
+        });
+
+
+
+        document.getElementById("totalUsers").innerHTML =
+        totalUsers;
+
+
+        document.getElementById("vipUsers").innerHTML =
+        vipUsers;
+
+
+        document.getElementById("onlineUsers").innerHTML =
+        onlineUsers;
+
+
+        document.getElementById("onlineVip").innerHTML =
+        onlineVip;
+
+
+
+        document.getElementById("lastActivity").innerHTML =
+            lastActivity
+            ? new Date(lastActivity).toLocaleString("fr-FR")
+            : "-";
+
+
+    });
+
+
+
+    // =========================
+    // DEMANDES VIP
+    // =========================
+
+    db.collection("vip_requests")
+    .onSnapshot(snapshot=>{
+
+        let pending = 0;
+        let total = snapshot.size;
+
+
+        snapshot.forEach(doc=>{
+
+
+            const data = doc.data();
+
+
+            if(data.status === "pending"){
+
+                pending++;
+
+            }
+
+
+        });
+
+
+
+        document.getElementById("pendingReq").innerHTML =
+        pending;
+
+
+        document.getElementById("totalReq").innerHTML =
+        total;
+
+
+    });
+
+
+}
+
+
+function loadRevenueStats(){
+
+    db.collection("vip_history")
+    .onSnapshot(snapshot=>{
+
+
+let todayRevenue = 0;
+let weekRevenue = 0;
+let monthRevenue = 0;
+let totalRevenue = 0;
+
+// Plans VIP
+let vip1Day = 0;
+let vip7Days = 0;
+let vip30Days = 0;
+
+let revenue1Day = 0;
+let revenue7Days = 0;
+let revenue30Days = 0;
+
+
+// Compteurs abonnements
+let todayCount = 0;
+let weekCount = 0;
+let monthCount = 0;
+let totalCount = 0;
+
+        const now = new Date();
+
+
+        // Début de journée locale
+        const todayStart = new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate()
+        ).getTime();
+
+
+        // Début semaine (lundi)
+        const day = now.getDay() || 7;
+
+        const weekStart = new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate() - day + 1
+        ).getTime();
+
+
+        // Début mois
+        const monthStart = new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            1
+        ).getTime();
+
+
+
+snapshot.forEach(doc=>{
+
+
+    const d = doc.data();
+
+
+    // Compter uniquement les activations VIP
+    if(d.action !== "VIP_ACTIVATED") return;
+
+
+
+    const amount = Number(d.amount || 2000);
+
+
+    const date = Number(d.createdAt);
+
+
+
+    if(!date) return;
+
+
+
+    // =========================
+    // TOTAL
+    // =========================
+
+    totalRevenue += amount;
+
+    totalCount++;
+// =========================
+// STATISTIQUES DES PLANS VIP
+// =========================
+
+if(d.duration === 1){
+
+    vip1Day++;
+
+    revenue1Day += amount;
+
+}
+
+
+else if(d.duration === 7){
+
+    vip7Days++;
+
+    revenue7Days += amount;
+
+}
+
+
+else if(d.duration === 30){
+
+    vip30Days++;
+
+    revenue30Days += amount;
+
+}
+
+
+    // =========================
+    // AUJOURD'HUI
+    // =========================
+
+    if(date >= todayStart){
+
+        todayRevenue += amount;
+
+        todayCount++;
+
+    }
+
+
+
+    // =========================
+    // CETTE SEMAINE (Lundi → Dimanche)
+    // =========================
+
+    const currentDay = now.getDay(); 
+    // Dimanche = 0, Lundi = 1
+
+
+    const diffToMonday = currentDay === 0 
+        ? 6 
+        : currentDay - 1;
+
+
+    const monday = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() - diffToMonday
+    );
+
+
+    monday.setHours(0,0,0,0);
+
+
+
+    const sunday = new Date(monday);
+
+
+    sunday.setDate(
+        monday.getDate() + 7
+    );
+
+
+
+    if(
+        date >= monday.getTime() &&
+        date < sunday.getTime()
+    ){
+
+        weekRevenue += amount;
+
+        weekCount++;
+
+    }
+
+
+
+    // =========================
+    // CE MOIS
+    // =========================
+
+    if(date >= monthStart){
+
+        monthRevenue += amount;
+
+        monthCount++;
+
+    }
+
+
+
+});
+
+// =========================
+// AFFICHAGE REVENUS VIP
+// =========================
+
+document.getElementById("todayRevenue").innerHTML =
+todayRevenue.toLocaleString()+" XAF";
+
+
+document.getElementById("weekRevenue").innerHTML =
+weekRevenue.toLocaleString()+" XAF";
+
+
+document.getElementById("monthRevenue").innerHTML =
+monthRevenue.toLocaleString()+" XAF";
+
+
+document.getElementById("totalRevenue").innerHTML =
+totalRevenue.toLocaleString()+" XAF";
+
+
+
+// =========================
+// AFFICHAGE NOMBRE VIP
+// =========================
+
+document.getElementById("todayVipCount").innerHTML =
+todayCount;
+
+
+document.getElementById("weekVipCount").innerHTML =
+weekCount;
+
+
+document.getElementById("monthVipCount").innerHTML =
+monthCount;
+
+
+document.getElementById("totalVipCount").innerHTML =
+totalCount;
+
+document.getElementById("vip1Day").innerHTML =
+vip1Day;
+
+
+document.getElementById("vip7Days").innerHTML =
+vip7Days;
+
+
+document.getElementById("vip30Days").innerHTML =
+vip30Days;
+
+
+
+document.getElementById("revenue1Day").innerHTML =
+revenue1Day.toLocaleString()+" XAF";
+
+
+document.getElementById("revenue7Days").innerHTML =
+revenue7Days.toLocaleString()+" XAF";
+
+
+document.getElementById("revenue30Days").innerHTML =
+revenue30Days.toLocaleString()+" XAF";
+
+    });
+
+}
+
+function loadVipConversion(){
+
+
+db.collection("users")
+.onSnapshot(snapshot=>{
+
+
+    let totalUsers = 0;
+    let activeVip = 0;
+    let expiredVip = 0;
+
+
+    const now = Date.now();
+
+
+
+    snapshot.forEach(doc=>{
+
+
+        const user = doc.data();
+
+
+        totalUsers++;
+
+
+
+        if(
+            user.vipActive === true &&
+            user.vipExpireAt > now
+        ){
+
+            activeVip++;
+
+        }
+
+
+
+        if(
+            user.vipExpireAt &&
+            user.vipExpireAt <= now
+        ){
+
+            expiredVip++;
+
+        }
+
+
+
+    });
+
+
+
+    let rate = 0;
+
+
+    if(totalUsers > 0){
+
+        rate = 
+        ((activeVip / totalUsers) * 100)
+        .toFixed(1);
+
+    }
+
+
+
+    document.getElementById("totalUsersCount")
+    .innerHTML = totalUsers;
+
+
+
+    document.getElementById("activeVipCount")
+    .innerHTML = activeVip;
+
+
+
+    document.getElementById("vipConversionRate")
+    .innerHTML = rate+"%";
+
+
+
+    document.getElementById("expiredVipCount")
+    .innerHTML = expiredVip;
+
+
+
+});
+
+
+}
+
+function loadVipAlerts(){
+
+db.collection("users")
+.where("vipActive","==",true)
+.onSnapshot(snapshot=>{
+
+
+let html = "";
+
+let count = 0;
+
+
+const now = Date.now();
+
+const threeDays =
+3 * 24 * 60 * 60 * 1000;
+
+
+
+snapshot.forEach(doc=>{
+
+
+const u = doc.data();
+
+
+
+if(
+u.vipExpireAt &&
+u.vipExpireAt > now &&
+u.vipExpireAt - now <= threeDays
+){
+
+
+count++;
+
+
+const daysLeft = Math.ceil(
+(u.vipExpireAt - now) /
+(24*60*60*1000)
+);
+
+
+
+html += `
+
+<div>
+
+👤 ${u.name || "Sans nom"}
+
+<br>
+
+📧 ${u.email || "-"}
+
+<br>
+
+⏳ Expire dans :
+<b>${daysLeft} jour(s)</b>
+
+</div>
+
+<hr>
+
+`;
+
+
+
+}
+
+
+});
+
+
+
+if(count === 0){
+
+html = "✅ Aucun VIP expire bientôt";
+
+}
+
+
+document.getElementById("vipAlerts")
+.innerHTML = html;
+
+
+
+});
+
+
+}
+
+async function renewVip(uid){
+
+try{
+
+
+const userSnap = await db.collection("users")
+.doc(uid)
+.get();
+
+
+if(!userSnap.exists){
+
+alert("Utilisateur introuvable");
+return;
+
+}
+
+
+
+const user = userSnap.data();
+
+
+
+const days = prompt(
+"Durée du renouvellement (1, 7 ou 30 jours)"
+);
+
+
+
+if(!days){
+
+return;
+
+}
+
+
+
+const duration = Number(days);
+
+
+
+if(
+duration !== 1 &&
+duration !== 7 &&
+duration !== 30
+){
+
+alert("Durée invalide");
+return;
+
+}
+
+
+
+const now = Date.now();
+
+let newExpire;
+
+
+
+// Si VIP encore actif,
+// on ajoute à la date existante
+
+if(
+user.vipExpireAt &&
+user.vipExpireAt > now
+){
+
+newExpire =
+user.vipExpireAt +
+(duration * 24 * 60 * 60 * 1000);
+
+}
+
+else{
+
+
+newExpire =
+now +
+(duration * 24 * 60 * 60 * 1000);
+
+}
+
+
+
+
+
+await db.collection("users")
+.doc(uid)
+.update({
+
+role:"vip",
+
+vip:true,
+
+vipActive:true,
+
+vipDuration:duration,
+
+vipExpireAt:newExpire,
+
+updatedAt:Date.now()
+
+});
+
+
+
+
+// =========================
+// Historique renouvellement
+// =========================
+
+let amount = 2000;
+
+
+if(duration === 1){
+
+amount = 1000;
+
+}
+else if(duration === 7){
+
+amount = 5000;
+
+}
+else if(duration === 30){
+
+amount = 20000;
+
+}
+
+
+
+await db.collection("vip_history")
+.add({
+
+uid:uid,
+
+name:user.name || "Sans nom",
+
+email:user.email || "-",
+
+action:"VIP_RENEWED",
+
+duration:duration,
+
+amount:amount,
+
+expireAt:newExpire,
+
+admin:auth.currentUser.email,
+
+createdAt:Date.now()
+
+});
+
+
+
+alert(
+"✅ VIP renouvelé pour "+duration+" jour(s)"
+);
+
+
+
+}
+catch(error){
+
+console.error(
+"RENEW VIP ERROR:",
+error
+);
+
+
+alert(
+"❌ Erreur renouvellement VIP"
+);
+
+
+}
+
+
+}
+
+function filterUsers(){
+
+const search =
+document.getElementById("searchUser")
+.value
+.toLowerCase();
+
+
+const filter =
+document.getElementById("userFilter")
+.value;
+
+
+
+filteredUsers =
+allUsers.filter(user=>{
+
+
+let matchSearch =
+
+(user.name || "")
+.toLowerCase()
+.includes(search)
+
+||
+
+(user.email || "")
+.toLowerCase()
+.includes(search);
+
+
+
+if(!matchSearch){
+
+return false;
+
+}
+
+
+
+
+if(filter === "vip"){
+
+return (
+user.vipActive === true &&
+user.vipExpireAt > Date.now()
+);
+
+}
+
+
+
+if(filter === "user"){
+
+return (
+user.role === "user"
+);
+
+}
+
+
+
+if(filter === "expired"){
+
+return (
+user.vipExpireAt &&
+user.vipExpireAt <= Date.now()
+);
+
+}
+
+
+
+return true;
+
+
+});
+
+
+
+displayUsers(filteredUsers);
+
+
+}
+
+
+// =========================
+// MOTEUR SCORE IA ML LEVEL 4
+// =========================
+
+function calculateAIScore(data){
+
+    let score = 0;
+
+
+    // Forme des équipes (0-25)
+    score += Number(data.homeForm || 0) * 0.125;
+    score += Number(data.awayForm || 0) * 0.125;
+
+
+    // Attaque (0-25)
+    score += Number(data.attack || 0) * 0.25;
+
+
+    // Défense (0-20)
+    score += Number(data.defense || 0) * 0.20;
+
+
+    // Contexte match (0-15)
+    score += Number(data.context || 0) * 0.15;
+
+
+    // Historique (0-15)
+    score += Number(data.history || 0) * 0.15;
+
+
+
+    return Math.round(score);
+
+}
+
+
+
+// =========================
+// NIVEAU DE CONFIANCE IA
+// =========================
+
+function getAIRisk(score){
+
+
+    if(score >= 80){
+
+        return "🔥 TRÈS FORT";
+
+    }
+
+
+    if(score >= 65){
+
+        return "🟢 CONFIANT";
+
+    }
+
+
+    if(score >= 50){
+
+        return "🟡 MOYEN";
+
+    }
+
+
+    return "🔴 RISQUÉ";
+
+
+}
+
+
+
+async function testApiFootball(){
+    const status = document.getElementById("aiStatus");
+
+    try {
+        status.innerHTML = "⚽ Vérification du service des matchs...";
+
+        const response = await fetch(
+            "https://vip-ai-api.sdz-ai.workers.dev/fixtures?dateFrom=2026-08-14&dateTo=2026-08-30"
+        );
+
+        const data = await response.json();
+
+        console.log("FIXTURES:", data);
+
+        if (!response.ok || data.status !== "SUCCESS") {
+            throw new Error(data.error || "Impossible de récupérer les matchs");
+        }
+
+        status.innerHTML =
+            "✅ API matchs connectée — " + data.count + " matchs disponibles";
+
+        alert(
+            "✅ Service des matchs connecté !\n\n" +
+            data.count +
+            " matchs récupérés."
+        );
+
+    } catch (error) {
+        console.error(error);
+        status.innerHTML = "❌ Service des matchs indisponible";
+        alert("❌ Erreur : " + (error.message || error));
+    }
+}
+
+
+async function testApiFootballFixture(){
+    const status = document.getElementById("aiStatus");
+
+    try {
+        status.innerHTML = "⚽ Chargement des vrais matchs...";
+
+        const response = await fetch(
+            "https://vip-ai-api.sdz-ai.workers.dev/fixtures?dateFrom=2026-08-14&dateTo=2026-08-30"
+        );
+
+        const data = await response.json();
+
+        console.log("MATCHS RÉELS:", data);
+
+        if (!response.ok || data.status !== "SUCCESS") {
+            throw new Error(data.error || "Erreur lors de la récupération des matchs");
+        }
+
+        const preview = data.matches
+            .slice(0, 20)
+            .map((m, i) =>
+                `${i + 1}. ${m.competitionName} — ${m.homeTeam} vs ${m.awayTeam}`
+            )
+            .join("\n");
+
+        status.innerHTML =
+            "✅ " + data.count + " vrais matchs récupérés";
+
+        alert(
+            "⚽ VRAIS MATCHS RÉCUPÉRÉS\n\n" +
+            "Total : " + data.count + "\n\n" +
+            preview
+        );
+
+    } catch (error) {
+        console.error(error);
+        status.innerHTML = "❌ Récupération des matchs échouée";
+        alert("❌ Erreur : " + (error.message || error));
+    }
+}
+
+
+// =========================
+// 🤖 AI GENERATOR — VRAIS MATCHS
+// =========================
+
+async function generateAI(){
+
+    const status = document.getElementById("aiStatus");
+
+    try {
+
+        const currentUser = firebase.auth().currentUser;
+        if (!currentUser) {
+            throw new Error("Utilisateur Firebase non connecté");
+        }
+        const token = await currentUser.getIdToken(true);
+        if (!token) {
+            throw new Error("Impossible de récupérer le token Firebase");
+        }
+        status.innerHTML = "⏳ Récupération des vrais matchs...";
+
+        // =========================
+        // 1. RÉCUPÉRATION DES MATCHS
+        // =========================
+
+        const fixturesResponse = await fetch(
+            "https://vip-ai-api.sdz-ai.workers.dev/fixtures?dateFrom=2026-08-14&dateTo=2026-08-30"
+        );
+
+        const fixturesData = await fixturesResponse.json();
+
+        console.log("FIXTURES IA:", fixturesData);
+
+        if (
+            !fixturesResponse.ok ||
+            fixturesData.status !== "SUCCESS" ||
+            !Array.isArray(fixturesData.matches)
+        ) {
+            throw new Error(
+                fixturesData.error ||
+                "Impossible de récupérer les vrais matchs"
+            );
+        }
+
+        let matches = fixturesData.matches;
+
+        if (matches.length < 3) {
+            throw new Error("Pas assez de matchs disponibles pour générer les pronostics.");
+        }
+
+        status.innerHTML =
+            "⚽ " + matches.length + " matchs récupérés — analyse IA...";
+
+
+        // =========================
+        // 2. PRÉPARATION DES MATCHS
+        // =========================
+
+        const aiMatches = matches.map(m => ({
+            homeTeam: m.homeTeam,
+                awayTeam: m.awayTeam,
+            competition: m.competitionName,
+            competitionCode: m.competition,
+            matchId: m.matchId,
+            date: m.date,
+            status: m.status,
+            homeTeamId: m.homeTeamId,
+            awayTeamId: m.awayTeamId,
+            homeCrest: m.homeCrest,
+            awayCrest: m.awayCrest
+        }));
+
+
+        // =========================
+        // 3. APPEL DU MOTEUR IA
+        // =========================
+
+        const aiResponse = await fetch(
+            "https://vip-ai-api.sdz-ai.workers.dev/generate",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + token
+                },
+                body: JSON.stringify({
+                    matches: aiMatches
+                })
+            }
+        );
+
+        const aiData = await aiResponse.json();
+
+        console.log("RÉPONSE AI ENGINE:", aiData);
+
+        if (!aiResponse.ok) {
+            throw new Error(
+                aiData.error ||
+                aiData.message ||
+                "Erreur du moteur IA"
+            );
+        }
+
+
+        // =========================
+        // 4. RÉCUPÉRATION DES ANALYSES
+        // =========================
+
+        let generated = [];
+
+        if (Array.isArray(aiData.predictions)) {
+            generated = aiData.predictions;
+        }
+
+        if (Array.isArray(aiData.analyses)) {
+            generated = aiData.analyses;
+        }
+
+        if (Array.isArray(aiData.best)) {
+            generated = aiData.best;
+        }
+
+
+        // Le Worker actuel peut également renvoyer
+        // directement aiMatch1 / aiMatch2 / aiMatch3.
+
+        if (generated.length < 3) {
+
+            generated = [
+                aiData.aiMatch1,
+                aiData.aiMatch2,
+                aiData.aiMatch3
+            ]
+            .filter(Boolean)
+            .map((text, index) => ({
+                match: text,
+                prediction: "Analyse IA",
+                confidence: 70 + (index * 3),
+                risk: getAIRisk(70 + (index * 3)),
+                analysis: "Analyse générée par VIP AI ENGINE."
+            }));
+        }
+
+
+        if (generated.length < 3) {
+            throw new Error(
+                "Le moteur IA n'a pas retourné au moins 3 pronostics."
+            );
+        }
+
+
+        // =========================
+        // 5. NORMALISATION
+        // =========================
+
+        const aiPredictions = generated
+            .slice(0, 3)
+            .map((p, index) => {
+
+                const confidence = Number(
+                    p.confidence ||
+                    p.score ||
+                    70
+                );
+
+                return {
+                    match:
+                        p.match ||
+                        p.fixture ||
+                        `${p.home || ""} vs ${p.away || ""}`,
+
+                    prediction:
+                        p.prediction ||
+                        p.pick ||
+                        "Analyse IA",
+
+                    confidence: Math.round(confidence),
+
+                    risk:
+                        p.risk ||
+                        getAIRisk(confidence),
+
+                    analysis:
+                        p.analysis ||
+                        "Analyse statistique générée par VIP AI ENGINE.",
+
+                    matchId:
+                        p.matchId ||
+                        p.id ||
+                        null
+                };
+            });
+
+
+        // =========================
+        // 6. SAUVEGARDE ANCIEN PRONOSTIC
+        // =========================
+
+        const currentRef =
+            db.collection("predictions").doc("current");
+
+        const currentSnap =
+            await currentRef.get();
+
+        if(currentSnap.exists){
+
+            const oldData =
+                currentSnap.data();
+
+            await db.collection("predictions_history")
+                .add({
+                    ...oldData,
+                    archivedAt: Date.now()
+                });
+        }
+
+
+        // =========================
+        // 7. PUBLICATION VIP
+        // =========================
+
+        await currentRef.set({
+
+            aiMatch1:
+                aiPredictions[0].match +
+                " → " +
+                aiPredictions[0].prediction,
+
+            aiMatch2:
+                aiPredictions[1].match +
+                " → " +
+                aiPredictions[1].prediction,
+
+            aiMatch3:
+                aiPredictions[2].match +
+                " → " +
+                aiPredictions[2].prediction,
+
+            coupon1:
+                aiPredictions[0].match +
+                " + " +
+                aiPredictions[1].match,
+
+            coupon2:
+                aiPredictions[1].match +
+                " + " +
+                aiPredictions[2].match,
+
+            predictions:
+                aiPredictions,
+
+            source:
+                "football-data.org",
+
+            engine:
+                "VIP AI ENGINE",
+
+            updatedAt:
+                Date.now()
+        });
+
+
+        // =========================
+        // 8. NOUVELLE BASE IA
+        // =========================
+
+        let total = 0;
+
+        aiPredictions.forEach(p => {
+            total += Number(p.confidence || 0);
+        });
+
+        await db.collection("ai_predictions")
+            .add({
+
+                model:
+                    "ML_LEVEL_4",
+
+                type:
+                    "vip",
+
+                source:
+                    "football-data.org",
+
+                averageConfidence:
+                    Math.round(
+                        total /
+                        aiPredictions.length
+                    ),
+
+                status:
+                    "ACTIVE",
+
+                predictions:
+                    aiPredictions,
+
+                createdAt:
+                    Date.now()
+            });
+
+
+        // =========================
+        // 9. FIN
+        // =========================
+
+        status.innerHTML =
+            "✅ " +
+            aiPredictions.length +
+            " vrais pronostics IA publiés";
+
+        alert(
+            "🤖 IA VIP générée avec succès !\n\n" +
+            aiPredictions
+                .map((p, i) =>
+                    `${i + 1}. ${p.match}\n` +
+                    `➡️ ${p.prediction}\n` +
+                    `🎯 ${p.confidence}%`
+                )
+                .join("\n\n")
+        );
+
+    }
+
+    catch(e){
+
+        console.error(e);
+
+        status.innerHTML =
+            "❌ " + (e.message || e);
+
+        alert(
+            "❌ Erreur IA :\n\n" +
+            (e.message || e)
+        );
+    }
+}
+
+</script>
+
+
+</body>
+
+</html>

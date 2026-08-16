@@ -1,0 +1,40 @@
+# ==============================
+# SECRETS / ENVIRONNEMENT
+# ==============================
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.p8
+service-account*.json
+firebase-service-account*.json
+credentials*.json
+
+# ==============================
+# SAUVEGARDES LOCALES
+# ==============================
+*.backup*
+*.bak
+*.old
+
+# ==============================
+# FICHIERS DE TEST
+# ==============================
+login.test.html
+firebase-test.html
+
+# ==============================
+# DEPENDANCES / BUILD
+# ==============================
+node_modules/
+.wrangler/
+dist/
+build/
+
+# ==============================
+# LOGS
+# ==============================
+*.log
+npm-debug.log*
