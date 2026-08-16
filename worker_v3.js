@@ -139,7 +139,7 @@ export default {
           return corsResponse({ error: "Use POST /generate" }, 405, origin);
         }
 
-        const admin = await requireFirebaseAdmin(request, env);
+        const admin = await requireFirebaseUser(request, env);
         const body = await request.json();
 
         if (Array.isArray(body.matches)) {
@@ -250,6 +250,43 @@ function requireAdmin(request, env) {
   }
 }
 
+
+async function requireFirebaseUser(request, env) {
+  const auth = request.headers.get("Authorization") || "";
+  if (!auth.startsWith("Bearer ")) {
+    throw new Error("Firebase ID token manquant");
+  }
+
+  const idToken = auth.slice(7).trim();
+
+  if (!env.FIREBASE_WEB_API_KEY) {
+    throw new Error("FIREBASE_WEB_API_KEY is not configured");
+  }
+
+  const response = await fetch(
+    `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${encodeURIComponent(env.FIREBASE_WEB_API_KEY)}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ idToken })
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok || !data.users || !data.users.length) {
+    throw new Error("Firebase ID token invalide");
+  }
+
+  const firebaseUser = data.users[0];
+
+  return {
+    uid: firebaseUser.localId,
+    email: firebaseUser.email || ""
+  };
+}
 
 async function requireFirebaseAdmin(request, env) {
   const auth = request.headers.get("Authorization") || "";
