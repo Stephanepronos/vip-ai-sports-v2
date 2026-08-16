@@ -310,12 +310,12 @@ async function loadPredictions() {
 
         container.innerHTML = html;
 
-    } catch (e) {
-        console.error("Erreur loadPredictions:", e);
+    }  catch (e) {
+    console.error("Erreur loadPredictions:", e);
 
-        container.innerHTML =
-            "❌ Impossible de charger les pronostics.";
-    }
+    container.innerHTML =
+        "❌ Erreur : " + (e.message || e);
+}
 }
 /* ===========================
    ROUTAGE VIP
