@@ -177,227 +177,303 @@ export default {
          * 🇩🇰 2. SOCCERSAPI — SUPERLIGAEN
          * =====================================================
          *
-         * SoccerSAPI:
+         * SoccerSAPI ne retourne pas correctement toutes les
+         * fixtures avec t=season sans team_id.
          *
-         * competition = 1609
-         * season      = 21004
+         * Nous utilisons donc les 12 équipes connues de la
+         * saison 21004 et récupérons leurs fixtures une par une.
          *
-         * Nous récupérons les fixtures de la saison puis
-         * gardons uniquement les matchs compris entre
-         * dateFrom et dateTo et qui ne sont pas terminés.
+         * Les matchs sont ensuite filtrés par date et dédupliqués.
          */
 
         const SOCCERSAPI_FIXTURE_COMPETITIONS = {
           "1609": {
             name: "Superligaen",
-            seasonId: "21004"
+            seasonId: "21004",
+
+            teamIds: [
+              79,   // FC Copenhagen
+              661,  // Viborg FF
+              715,  // Silkeborg IF
+              716,  // AC Horsens
+              717,  // Randers FC
+              718,  // Soenderjyske
+              720,  // AGF Aarhus
+              721,  // Lyngby BK
+              722,  // Odense Boldklub
+              724,  // Broendby IF
+              725,  // FC Midtjylland
+              726   // FC Nordsjaelland
+            ]
           }
         };
 
         if (!env.SOCCER_API_USER || !env.SOCCER_API_KEY) {
+
           errors.push({
             source: "soccersapi",
             competition: "1609",
             name: "Superligaen",
             error: "SOCCER_API_USER or SOCCER_API_KEY missing"
           });
+
         } else {
+
           for (
-            const [leagueId, leagueConfig] of Object.entries(
-              SOCCERSAPI_FIXTURE_COMPETITIONS
-            )
+            const [leagueId, leagueConfig]
+              of Object.entries(SOCCERSAPI_FIXTURE_COMPETITIONS)
           ) {
-            try {
-              const fixturesUrl =
-                `https://api.soccersapi.com/v2.2/fixtures/` +
-                `?user=${encodeURIComponent(env.SOCCER_API_USER)}` +
-                `&token=${encodeURIComponent(env.SOCCER_API_KEY)}` +
-                `&t=season` +
-                `&season_id=${encodeURIComponent(leagueConfig.seasonId)}`;
 
-              const response = await fetch(fixturesUrl, {
-                method: "GET",
-                headers: {
-                  "Accept": "application/json"
-                }
-              });
+            const superligaMatches = new Map();
 
-              const text = await response.text();
-
-              console.log(
-                "===== SOCCERSAPI SUPERLIGA FIXTURES TRACE =====",
-                JSON.stringify({
-                  competition: leagueId,
-                  competitionName: leagueConfig.name,
-                  seasonId: leagueConfig.seasonId,
-                  status: response.status,
-                  ok: response.ok,
-                  response: text.slice(0, 700)
-                })
-              );
-
-              if (!response.ok) {
-                errors.push({
-                  source: "soccersapi",
-                  competition: leagueId,
-                  name: leagueConfig.name,
-                  seasonId: leagueConfig.seasonId,
-                  status: response.status,
-                  error: text.slice(0, 500)
-                });
-                continue;
-              }
-
-              let data;
+            for (const teamId of leagueConfig.teamIds) {
 
               try {
-                data = JSON.parse(text);
-              } catch {
+
+                const fixturesUrl =
+                  `https://api.soccersapi.com/v2.2/fixtures/` +
+                  `?user=${encodeURIComponent(env.SOCCER_API_USER)}` +
+                  `&token=${encodeURIComponent(env.SOCCER_API_KEY)}` +
+                  `&t=season` +
+                  `&season_id=${encodeURIComponent(leagueConfig.seasonId)}` +
+                  `&team_id=${encodeURIComponent(teamId)}`;
+
+                const response = await fetch(fixturesUrl, {
+                  method: "GET",
+                  headers: {
+                    "Accept": "application/json"
+                  }
+                });
+
+                const text = await response.text();
+
+                console.log(
+                  "===== SOCCERSAPI SUPERLIGA TEAM TRACE =====",
+                  JSON.stringify({
+                    competition: leagueId,
+                    competitionName: leagueConfig.name,
+                    seasonId: leagueConfig.seasonId,
+                    teamId,
+                    status: response.status,
+                    ok: response.ok,
+                    response: text.slice(0, 300)
+                  })
+                );
+
+                if (!response.ok) {
+
+                  errors.push({
+                    source: "soccersapi",
+                    competition: leagueId,
+                    name: leagueConfig.name,
+                    seasonId: leagueConfig.seasonId,
+                    teamId,
+                    status: response.status,
+                    error: text.slice(0, 500)
+                  });
+
+                  continue;
+                }
+
+                let data;
+
+                try {
+                  data = JSON.parse(text);
+                } catch {
+
+                  errors.push({
+                    source: "soccersapi",
+                    competition: leagueId,
+                    name: leagueConfig.name,
+                    seasonId: leagueConfig.seasonId,
+                    teamId,
+                    error: "Invalid SoccerSAPI JSON"
+                  });
+
+                  continue;
+                }
+
+                const fixtures =
+                  Array.isArray(data.data)
+                    ? data.data
+                    : [];
+
+                console.log(
+                  "===== SOCCERSAPI SUPERLIGA TEAM COUNT =====",
+                  JSON.stringify({
+                    teamId,
+                    count: fixtures.length
+                  })
+                );
+
+                for (const fixture of fixtures) {
+
+                  const fixtureDate =
+                    fixture?.time?.date || "";
+
+                  if (!fixtureDate) {
+                    continue;
+                  }
+
+                  const fixtureDateOnly =
+                    String(fixtureDate).slice(0, 10);
+
+                  /*
+                   * Garder uniquement la période demandée.
+                   */
+                  if (
+                    fixtureDateOnly < dateFrom ||
+                    fixtureDateOnly > dateTo
+                  ) {
+                    continue;
+                  }
+
+                  const statusName =
+                    String(
+                      fixture?.status_name || ""
+                    ).toLowerCase();
+
+                  /*
+                   * Garder uniquement les matchs à venir.
+                   */
+                  if (
+                    statusName === "finished" ||
+                    statusName === "cancelled" ||
+                    statusName === "canceled" ||
+                    statusName === "postponed"
+                  ) {
+                    continue;
+                  }
+
+                  const home =
+                    fixture?.teams?.home || {};
+
+                  const away =
+                    fixture?.teams?.away || {};
+
+                  if (!home.id || !away.id) {
+                    continue;
+                  }
+
+                  /*
+                   * Identifiant stable pour éviter qu'un même
+                   * match soit ajouté deux fois lorsqu'il apparaît
+                   * dans les fixtures des deux équipes.
+                   */
+                  const fixtureKey =
+                    String(
+                      fixture.id ||
+                      `${fixtureDateOnly}_${home.id}_${away.id}`
+                    );
+
+                  if (superligaMatches.has(fixtureKey)) {
+                    continue;
+                  }
+
+                  const result = {
+                    competition: leagueId,
+
+                    competitionName:
+                      leagueConfig.name,
+
+                    matchId:
+                      fixture.id || null,
+
+                    date:
+                      fixture?.time?.datetime ||
+                      `${fixtureDateOnly}T00:00:00Z`,
+
+                    status:
+                      fixture?.status_name ||
+                      "Notstarted",
+
+                    matchday:
+                      fixture?.week ||
+                      fixture?.round_name ||
+                      null,
+
+                    homeTeam:
+                      home.name ||
+                      "",
+
+                    awayTeam:
+                      away.name ||
+                      "",
+
+                    homeTeamId:
+                      Number(home.id) ||
+                      null,
+
+                    awayTeamId:
+                      Number(away.id) ||
+                      null,
+
+                    homeCrest:
+                      home.img ||
+                      "",
+
+                    awayCrest:
+                      away.img ||
+                      "",
+
+                    source: "soccersapi"
+                  };
+
+                  superligaMatches.set(
+                    fixtureKey,
+                    result
+                  );
+
+                  console.log(
+                    "===== SOCCERSAPI SUPERLIGA MATCH ADDED =====",
+                    JSON.stringify({
+                      matchId: result.matchId,
+                      date: result.date,
+                      homeTeam: result.homeTeam,
+                      awayTeam: result.awayTeam,
+                      competition: result.competition,
+                      competitionName:
+                        result.competitionName,
+                      source: result.source
+                    })
+                  );
+                }
+
+              } catch (error) {
+
                 errors.push({
                   source: "soccersapi",
                   competition: leagueId,
                   name: leagueConfig.name,
                   seasonId: leagueConfig.seasonId,
-                  error: "Invalid SoccerSAPI JSON"
+                  teamId,
+
+                  error:
+                    error instanceof Error
+                      ? error.message
+                      : "Unknown SoccerSAPI team fixtures error"
                 });
-                continue;
               }
-
-              const fixtures = Array.isArray(data.data)
-                ? data.data
-                : [];
-
-              console.log(
-                "===== SOCCERSAPI SUPERLIGA FIXTURES COUNT =====",
-                JSON.stringify({
-                  competition: leagueId,
-                  seasonId: leagueConfig.seasonId,
-                  count: fixtures.length
-                })
-              );
-
-              for (const fixture of fixtures) {
-                const fixtureDate =
-                  fixture?.time?.date || "";
-
-                if (!fixtureDate) {
-                  continue;
-                }
-
-                const fixtureDateOnly =
-                  String(fixtureDate).slice(0, 10);
-
-                /*
-                 * Garder uniquement la période demandée.
-                 */
-                if (
-                  fixtureDateOnly < dateFrom ||
-                  fixtureDateOnly > dateTo
-                ) {
-                  continue;
-                }
-
-                const statusName =
-                  String(
-                    fixture?.status_name || ""
-                  ).toLowerCase();
-
-                /*
-                 * On veut les matchs à venir.
-                 */
-                if (
-                  statusName === "finished" ||
-                  statusName === "cancelled" ||
-                  statusName === "canceled" ||
-                  statusName === "postponed"
-                ) {
-                  continue;
-                }
-
-                const home =
-                  fixture?.teams?.home || {};
-
-                const away =
-                  fixture?.teams?.away || {};
-
-                if (!home.id || !away.id) {
-                  continue;
-                }
-
-                const result = {
-                  competition: leagueId,
-                  competitionName: leagueConfig.name,
-
-                  matchId: fixture.id || null,
-
-                  date:
-                    fixture?.time?.datetime ||
-                    `${fixtureDateOnly}T00:00:00Z`,
-
-                  status:
-                    fixture.status_name ||
-                    "Notstarted",
-
-                  matchday:
-                    fixture.week ||
-                    fixture.round_name ||
-                    null,
-
-                  homeTeam:
-                    home.name ||
-                    "",
-
-                  awayTeam:
-                    away.name ||
-                    "",
-
-                  homeTeamId:
-                    Number(home.id) ||
-                    null,
-
-                  awayTeamId:
-                    Number(away.id) ||
-                    null,
-
-                  homeCrest:
-                    home.img ||
-                    "",
-
-                  awayCrest:
-                    away.img ||
-                    "",
-
-                  source: "soccersapi"
-                };
-
-                results.push(result);
-
-                console.log(
-                  "===== SOCCERSAPI SUPERLIGA MATCH ADDED =====",
-                  JSON.stringify({
-                    matchId: result.matchId,
-                    date: result.date,
-                    homeTeam: result.homeTeam,
-                    homeTeamId: result.homeTeamId,
-                    awayTeam: result.awayTeam,
-                    awayTeamId: result.awayTeamId,
-                    competition: result.competition,
-                    competitionName: result.competitionName
-                  })
-                );
-              }
-            } catch (error) {
-              errors.push({
-                source: "soccersapi",
-                competition: leagueId,
-                name: leagueConfig.name,
-                seasonId: leagueConfig.seasonId,
-                error:
-                  error instanceof Error
-                    ? error.message
-                    : "Unknown SoccerSAPI fixtures error"
-              });
             }
+
+            /*
+             * Ajouter les matchs Superliga dédupliqués aux résultats
+             * principaux.
+             */
+            for (const match of superligaMatches.values()) {
+              results.push(match);
+            }
+
+            console.log(
+              "===== SOCCERSAPI SUPERLIGA FIXTURES COUNT =====",
+              JSON.stringify({
+                competition: leagueId,
+                seasonId: leagueConfig.seasonId,
+                teamsChecked: leagueConfig.teamIds.length,
+                uniqueMatches:
+                  superligaMatches.size
+              })
+            );
           }
         }
 
