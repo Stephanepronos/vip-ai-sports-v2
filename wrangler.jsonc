@@ -2,5 +2,8 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "vip-ai-api",
   "main": "./worker_v3.js",
-  "compatibility_date": "2026-06-30"
+  "compatibility_date": "2026-06-30",
+  "vars": {
+    "FIREBASE_PROJECT_ID": "vip-pronostics"
+  }
 }

@@ -4,37 +4,79 @@
 .env
 .env.*
 !.env.example
-*.pem
-*.key
-*.p12
-*.p8
-service-account*.json
-firebase-service-account*.json
-credentials*.json
 
 # ==============================
-# SAUVEGARDES LOCALES
-# ==============================
-*.backup*
-*.bak
-*.old
-
-# ==============================
-# FICHIERS DE TEST
-# ==============================
-login.test.html
-firebase-test.html
-
-# ==============================
-# DEPENDANCES / BUILD
+# DEPENDENCIES / LOCAL TOOLS
 # ==============================
 node_modules/
 .wrangler/
-dist/
-build/
 
 # ==============================
-# LOGS
+# TESTS / DONNEES TEMPORAIRES
+# ==============================
+*_test.json
+test_*.json
+probe_*.json
+league_*.json
+season_*.json
+history_*.json
+sydney_*.json
+current_fixtures.json
+fixtures_*.json
+deploy_metadata.json
+team_search.json
+team_test.json
+soccersapi_*.json
+
+# ==============================
+# SAUVEGARDES HTML
+# ==============================
+*.backup
+*.backup-*
+*.backups
+*.bak
+
+# ==============================
+# SAUVEGARDES JAVASCRIPT
+# ==============================
+*.backup.js
+*.backup-*.js
+worker_v3.backup.js
+worker_v3.js.backup*
+worker_v3.before-*.js
+worker_v3_before_*.js
+worker_v3_BACKUP_*.js
+worker_v3_backup_*.js
+
+# ==============================
+# SAUVEGARDES CONFIG
+# ==============================
+wrangler.jsonc.backup
+wrangler.toml.backup
+package.json.before-*
+
+# ==============================
+# AUTRES FICHIERS LOCAUX
 # ==============================
 *.log
-npm-debug.log*
+
+# ==============================
+# BACKUPS RESTANTS
+# ==============================
+*.before-*
+*.backup
+*.backup-*
+*_backup.js
+*_BACKUP_*.js
+
+# Sauvegardes avec .backup.
+*.backup.*
+*.backup
+*.backup-*
+*.before-*
+*_backup.js
+*_BACKUP_*.js
+
+# Fichiers de test locaux
+firebase-test.html
+login.test.html
