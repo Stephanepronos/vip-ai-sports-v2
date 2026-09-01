@@ -1071,20 +1071,42 @@ async function loadPredictions(){
 
 
 
-            document.getElementById("coupons").innerHTML = `
+            const vipCoupons = d.vipCoupons || {};
+            const coupon1 = vipCoupons.coupon1 || {};
+            const coupon2 = vipCoupons.coupon2 || {};
 
+            const renderCoupon = (title, coupon) => {
+                const match1 = coupon.match1 || {};
+                const match2 = coupon.match2 || {};
 
+                return `
                 <div class="coupon">
-                🎫 ${d.coupon1 || ""}
+                    <h3>🎫 ${title}</h3>
+
+                    <div class="coupon-match">
+                        <strong>⚽ ${match1.homeTeam || ""} vs ${match1.awayTeam || ""}</strong>
+                        <br>
+                        🎯 Pronostic : <b>${match1.prediction || "Non défini"}</b>
+                        <br>
+                        🔢 Score exact : <b>${match1.exactScore || "Non défini"}</b>
+                    </div>
+
+                    <div class="coupon-match">
+                        <strong>⚽ ${match2.homeTeam || ""} vs ${match2.awayTeam || ""}</strong>
+                        <br>
+                        🎯 Pronostic : <b>${match2.prediction || "Non défini"}</b>
+                        <br>
+                        🔢 Score exact : <b>${match2.exactScore || "Non défini"}</b>
+                    </div>
+
+                    <div class="vip-watermark">VIP</div>
                 </div>
+                `;
+            };
 
-
-                <div class="coupon">
-                🎫 ${d.coupon2 || ""}
-                </div>
-
-
-            `;
+            document.getElementById("coupons").innerHTML =
+                renderCoupon("COUPON VIP 1", coupon1) +
+                renderCoupon("COUPON VIP 2", coupon2);
 
 
 

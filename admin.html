@@ -310,6 +310,112 @@ Chargement...
 
 <div class="card">
 
+
+<!-- =========================
+     COUPONS VIP DU JOUR
+     ========================= -->
+
+<div class="card" id="vipCouponsAdmin">
+
+<h2>🏆 Coupons VIP du jour</h2>
+
+<p>
+Sélectionnez les vrais matchs, définissez les pronostics
+et les scores exacts, puis publiez les deux coupons VIP.
+</p>
+
+<hr>
+
+<h3>🎫 Coupon VIP 1</h3>
+
+<label>Match 1</label>
+<select id="coupon1Match1">
+<option value="">⏳ Chargement...</option>
+</select>
+
+<input
+type="text"
+id="coupon1Prediction1"
+placeholder="Pronostic : 1, X, 1X, Over 2.5..."
+>
+
+<input
+type="text"
+id="coupon1Score1"
+placeholder="Score exact : 2-1"
+>
+
+<label>Match 2</label>
+<select id="coupon1Match2">
+<option value="">⏳ Chargement...</option>
+</select>
+
+<input
+type="text"
+id="coupon1Prediction2"
+placeholder="Pronostic : 1, X, 1X, Over 2.5..."
+>
+
+<input
+type="text"
+id="coupon1Score2"
+placeholder="Score exact : 1-0"
+>
+
+<hr>
+
+<h3>🎫 Coupon VIP 2</h3>
+
+<label>Match 1</label>
+<select id="coupon2Match1">
+<option value="">⏳ Chargement...</option>
+</select>
+
+<input
+type="text"
+id="coupon2Prediction1"
+placeholder="Pronostic : 1, X, 1X, Over 2.5..."
+>
+
+<input
+type="text"
+id="coupon2Score1"
+placeholder="Score exact : 2-0"
+>
+
+<label>Match 2</label>
+<select id="coupon2Match2">
+<option value="">⏳ Chargement...</option>
+</select>
+
+<input
+type="text"
+id="coupon2Prediction2"
+placeholder="Pronostic : 1, X, 1X, Over 2.5..."
+>
+
+<input
+type="text"
+id="coupon2Score2"
+placeholder="Score exact : 2-1"
+>
+
+<br><br>
+
+<button onclick="loadCouponFixtures()">
+🔄 Actualiser les matchs
+</button>
+
+<button onclick="publishVipCoupons()">
+🚀 Publier les 2 coupons VIP
+</button>
+
+<p id="couponStatus">
+⏳ Chargement...
+</p>
+
+</div>
+
 <h2>👥 Gestion des utilisateurs</h2>
 
 
@@ -3234,9 +3340,34 @@ async function generateAI(){
         }
 
         let matches = fixturesData.matches;
+        console.log("===== 🔎 FIXTURES IA RAW DEBUG =====");
+        console.log("URL =", fixturesResponse.url);
+        console.log("HTTP =", fixturesResponse.status);
+        console.log("OK =", fixturesResponse.ok);
+        console.log("DATA STATUS =", fixturesData.status);
+        console.log("DATA COUNT =", fixturesData.count);
+        console.log("MATCHES TYPE =", typeof fixturesData.matches);
+        console.log("MATCHES ARRAY =", Array.isArray(fixturesData.matches));
+        console.log("MATCHES LENGTH =", fixturesData.matches?.length);
+        console.log("MATCHES FIRST =", fixturesData.matches?.[0]);
+        console.log("MATCHES LAST =", fixturesData.matches?.[fixturesData.matches.length - 1]);
+        console.log("================================");
 
-        if (matches.length < 3) {
-            throw new Error("Pas assez de matchs disponibles pour générer les pronostics.");
+
+        console.log("===== DEBUG FIXTURES IA =====");
+        console.log("fixturesResponse.ok =", fixturesResponse.ok);
+        console.log("fixturesData.status =", fixturesData.status);
+        console.log("fixturesData.count =", fixturesData.count);
+        console.log("Array.isArray(matches) =", Array.isArray(matches));
+        console.log("matches.length =", matches.length);
+        console.log("first match =", matches[0]);
+        console.log("================================");
+
+        if (!Array.isArray(matches) || matches.length < 3) {
+            throw new Error(
+                "Pas assez de matchs disponibles pour générer les pronostics. " +
+                "Reçu: " + (Array.isArray(matches) ? matches.length : "NON-ARRAY")
+            );
         }
 
         status.innerHTML =
@@ -3526,9 +3657,386 @@ async function generateAI(){
     }
 }
 
+
+
+/* =========================================================
+   🎫 COUPONS VIP DU JOUR
+   ========================================================= */
+
+const COUPON_WORKER =
+    "https://vip-ai-api.sdz-ai.workers.dev";
+
+let couponFixtures = [];
+
+
+/* =========================
+   🔄 CHARGER LES VRAIS MATCHS
+   ========================= */
+
+async function loadCouponFixtures(){
+
+    const status =
+        document.getElementById("couponStatus");
+
+    try{
+
+        status.innerHTML =
+            "⏳ Chargement des vrais matchs...";
+
+        const response =
+            await fetch(
+                COUPON_WORKER + "/fixtures"
+            );
+
+        if(!response.ok){
+
+            throw new Error(
+                "Impossible de récupérer les matchs."
+            );
+
+        }
+
+        const data =
+            await response.json();
+
+        if(
+            !data.matches ||
+            !Array.isArray(data.matches) ||
+            data.matches.length === 0
+        ){
+
+            throw new Error(
+                "Aucun match disponible."
+            );
+
+        }
+
+        couponFixtures =
+            data.matches;
+
+        populateCouponSelect(
+            "coupon1Match1"
+        );
+
+        populateCouponSelect(
+            "coupon1Match2"
+        );
+
+        populateCouponSelect(
+            "coupon2Match1"
+        );
+
+        populateCouponSelect(
+            "coupon2Match2"
+        );
+
+        status.innerHTML =
+            "✅ " +
+            couponFixtures.length +
+            " vrais matchs disponibles.";
+
+    }
+    catch(e){
+
+        console.error(
+            "Erreur coupons :",
+            e
+        );
+
+        status.innerHTML =
+            "❌ " +
+            (e.message || e);
+
+    }
+
+}
+
+
+/* =========================
+   📋 REMPLIR LES SELECT
+   ========================= */
+
+function populateCouponSelect(id){
+
+    const select =
+        document.getElementById(id);
+
+    if(!select) return;
+
+    select.innerHTML =
+        '<option value="">-- Choisir un match --</option>';
+
+    couponFixtures.forEach(
+        (match, index) => {
+
+            const option =
+                document.createElement("option");
+
+            option.value =
+                index;
+
+            const date =
+                match.date
+                    ? new Date(match.date)
+                        .toLocaleString()
+                    : "";
+
+            option.textContent =
+                `${match.competitionName || match.competition || ""} | ` +
+                `${match.homeTeam} vs ${match.awayTeam} | ` +
+                `${date}`;
+
+            select.appendChild(option);
+
+        }
+    );
+
+}
+
+
+/* =========================
+   🔎 RÉCUPÉRER UN MATCH
+   ========================= */
+
+function getSelectedCouponMatch(id){
+
+    const select =
+        document.getElementById(id);
+
+    if(!select || select.value === "")
+        return null;
+
+    const index =
+        Number(select.value);
+
+    return couponFixtures[index] || null;
+
+}
+
+
+/* =========================
+   🧩 CONSTRUIRE UN MATCH VIP
+   ========================= */
+
+function buildCouponMatch(
+    selectId,
+    predictionId,
+    scoreId
+){
+
+    const match =
+        getSelectedCouponMatch(selectId);
+
+    const prediction =
+        document.getElementById(
+            predictionId
+        ).value.trim();
+
+    const score =
+        document.getElementById(
+            scoreId
+        ).value.trim();
+
+    if(!match){
+
+        throw new Error(
+            "Veuillez sélectionner tous les matchs."
+        );
+
+    }
+
+    if(!prediction){
+
+        throw new Error(
+            "Veuillez saisir tous les pronostics."
+        );
+
+    }
+
+    if(!score){
+
+        throw new Error(
+            "Veuillez saisir tous les scores exacts."
+        );
+
+    }
+
+    return {
+
+        matchId:
+            match.matchId || null,
+
+        competition:
+            match.competitionName ||
+            match.competition ||
+            "",
+
+        homeTeam:
+            match.homeTeam,
+
+        awayTeam:
+            match.awayTeam,
+
+        date:
+            match.date || "",
+
+        prediction:
+            prediction,
+
+        exactScore:
+            score
+
+    };
+
+}
+
+
+/* =========================
+   🚀 PUBLIER LES 2 COUPONS
+   ========================= */
+
+async function publishVipCoupons(){
+
+    const status =
+        document.getElementById(
+            "couponStatus"
+        );
+
+    try{
+
+        status.innerHTML =
+            "⏳ Publication des coupons...";
+
+        /* =========================
+           COUPON 1
+           ========================= */
+
+        const coupon1 = {
+
+            match1:
+                buildCouponMatch(
+                    "coupon1Match1",
+                    "coupon1Prediction1",
+                    "coupon1Score1"
+                ),
+
+            match2:
+                buildCouponMatch(
+                    "coupon1Match2",
+                    "coupon1Prediction2",
+                    "coupon1Score2"
+                )
+
+        };
+
+
+        /* =========================
+           COUPON 2
+           ========================= */
+
+        const coupon2 = {
+
+            match1:
+                buildCouponMatch(
+                    "coupon2Match1",
+                    "coupon2Prediction1",
+                    "coupon2Score1"
+                ),
+
+            match2:
+                buildCouponMatch(
+                    "coupon2Match2",
+                    "coupon2Prediction2",
+                    "coupon2Score2"
+                )
+
+        };
+
+
+        /* =========================
+           FIRESTORE
+           ========================= */
+
+        await db
+            .collection("predictions")
+            .doc("current")
+            .set({
+
+                vipCoupons: {
+
+                    coupon1:
+                        coupon1,
+
+                    coupon2:
+                        coupon2,
+
+                    publishedAt:
+                        Date.now(),
+
+                    publishedBy:
+                        auth.currentUser
+                            ? auth.currentUser.email
+                            : "admin"
+
+                }
+
+            }, {
+
+                merge: true
+
+            });
+
+
+        status.innerHTML =
+            "✅ Les 2 coupons VIP sont publiés.";
+
+        alert(
+            "✅ Coupons VIP publiés avec succès !"
+        );
+
+    }
+    catch(e){
+
+        console.error(
+            "Erreur publication coupons :",
+            e
+        );
+
+        status.innerHTML =
+            "❌ " +
+            (e.message || e);
+
+        alert(
+            "❌ Erreur :\n\n" +
+            (e.message || e)
+        );
+
+    }
+
+}
+
+
+/* =========================
+   🚀 CHARGEMENT AUTOMATIQUE
+   ========================= */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+
+        if(
+            document.getElementById(
+                "coupon1Match1"
+            )
+        ){
+
+            loadCouponFixtures();
+
+        }
+
+    }
+);
 </script>
 
-
 </body>
-
 </html>
