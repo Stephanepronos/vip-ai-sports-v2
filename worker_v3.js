@@ -2,6 +2,105 @@ export default {
   async fetch(request, env) {
     const origin = request.headers.get("Origin") || "*";
     const url = new URL(request.url);
+if (url.pathname === "/debug-sportmonks") {
+  if (request.method !== "GET") {
+    return corsResponse({ error: "Use GET /debug-sportmonks" }, 405, origin);
+  }
+
+  if (!env.SPORTMONKS_API_TOKEN) {
+    return corsResponse({
+      status: "ERROR",
+      error: "SPORTMONKS_API_TOKEN missing"
+    }, 500, origin);
+  }
+
+  const teamName = url.searchParams.get("team") || "Flamengo";
+
+  try {
+    const searchUrl =
+      `https://api.sportmonks.com/v3/football/teams/search/` +
+      `${encodeURIComponent(teamName)}` +
+      `?api_token=${encodeURIComponent(env.SPORTMONKS_API_TOKEN)}`;
+
+    const searchResponse = await fetch(searchUrl, {
+      headers: { "Accept": "application/json" }
+    });
+
+    const searchText = await searchResponse.text();
+
+    let searchData = null;
+    try {
+      searchData = JSON.parse(searchText);
+    } catch {}
+
+    const teams = Array.isArray(searchData?.data)
+      ? searchData.data
+      : [];
+
+    const team = teams[0] || null;
+
+    if (!team?.id) {
+      return corsResponse({
+        status: "SEARCH_FAILED",
+        teamName,
+        httpStatus: searchResponse.status,
+        response: searchText.slice(0, 1000)
+      }, 200, origin);
+    }
+
+    const today = new Date();
+    const from = new Date(today);
+    from.setDate(from.getDate() - 180);
+
+    const dateFrom = from.toISOString().slice(0, 10);
+    const dateTo = today.toISOString().slice(0, 10);
+
+    const fixturesUrl =
+      `https://api.sportmonks.com/v3/football/fixtures/between/` +
+      `${dateFrom}/${dateTo}/${team.id}` +
+      `?include=participants;scores` +
+      `&api_token=${encodeURIComponent(env.SPORTMONKS_API_TOKEN)}`;
+
+    const fixturesResponse = await fetch(fixturesUrl, {
+      headers: { "Accept": "application/json" }
+    });
+
+    const fixturesText = await fixturesResponse.text();
+
+    let fixturesData = null;
+    try {
+      fixturesData = JSON.parse(fixturesText);
+    } catch {}
+
+    const fixtures = Array.isArray(fixturesData?.data)
+      ? fixturesData.data
+      : [];
+
+    return corsResponse({
+      status: "SUCCESS",
+      teamName,
+      sportmonksTeam: {
+        id: team.id,
+        name: team.name || null
+      },
+      searchHttpStatus: searchResponse.status,
+      fixturesHttpStatus: fixturesResponse.status,
+      dateFrom,
+      dateTo,
+      fixturesCount: fixtures.length,
+      firstFixture: fixtures[0] || null
+    }, 200, origin);
+
+  } catch (error) {
+    return corsResponse({
+      status: "ERROR",
+      teamName,
+      error: error instanceof Error
+        ? error.message
+        : "Unknown error"
+    }, 500, origin);
+  }
+}
 
     if (request.method === "OPTIONS") {
       return corsResponse(null, 204, origin);
