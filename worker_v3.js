@@ -2,6 +2,85 @@ export default {
   async fetch(request, env) {
     const origin = request.headers.get("Origin") || "*";
     const url = new URL(request.url);
+    
+        if (url.pathname === "/debug-sportmonks-id") {
+      if (request.method !== "GET") {
+        return corsResponse(
+          { error: "Use GET /debug-sportmonks-id" },
+          405,
+          origin
+        );
+      }
+
+      if (!env.SPORTMONKS_API_TOKEN) {
+        return corsResponse({
+          status: "ERROR",
+          error: "SPORTMONKS_API_TOKEN missing"
+        }, 500, origin);
+      }
+
+      const teamId = Number(url.searchParams.get("teamId") || "3468");
+
+      if (!Number.isFinite(teamId) || teamId <= 0) {
+        return corsResponse({
+          status: "ERROR",
+          error: "Invalid teamId"
+        }, 400, origin);
+      }
+
+      try {
+        const today = new Date();
+        const from = new Date(today);
+        from.setDate(from.getDate() - 180);
+
+        const dateFrom = from.toISOString().slice(0, 10);
+        const dateTo = today.toISOString().slice(0, 10);
+
+        const fixturesUrl =
+          `https://api.sportmonks.com/v3/football/fixtures/between/` +
+          `${dateFrom}/${dateTo}/${teamId}` +
+          `?include=participants;scores` +
+          `&api_token=${encodeURIComponent(env.SPORTMONKS_API_TOKEN)}`;
+
+        const response = await fetch(fixturesUrl, {
+          method: "GET",
+          headers: {
+            "Accept": "application/json"
+          }
+        });
+
+        const text = await response.text();
+
+        let data = null;
+        try {
+          data = JSON.parse(text);
+        } catch {}
+
+        const fixtures = Array.isArray(data?.data)
+          ? data.data
+          : [];
+
+        return corsResponse({
+          status: response.ok ? "SUCCESS" : "API_ERROR",
+          teamId,
+          httpStatus: response.status,
+          dateFrom,
+          dateTo,
+          fixturesCount: fixtures.length,
+          firstFixture: fixtures[0] || null,
+          response: fixtures.length ? null : text.slice(0, 1500)
+        }, 200, origin);
+
+      } catch (error) {
+        return corsResponse({
+          status: "ERROR",
+          teamId,
+          error: error instanceof Error
+            ? error.message
+            : "Unknown error"
+        }, 500, origin);
+      }
+    }
 if (url.pathname === "/debug-sportmonks") {
   if (request.method !== "GET") {
     return corsResponse({ error: "Use GET /debug-sportmonks" }, 405, origin);
