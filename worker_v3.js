@@ -2278,9 +2278,15 @@ export default {
 
           const analysesWithStats = analyses
             .filter(item =>
-              item.dataQuality?.hasRealStats === true
+              item.dataQuality?.dataSides >= 1
             )
             .sort((a, b) => {
+              const sidesA = Number(a.dataQuality?.dataSides || 0);
+              const sidesB = Number(b.dataQuality?.dataSides || 0);
+
+              if (sidesB !== sidesA) {
+                return sidesB - sidesA;
+              }
               const completeA =
                 a.dataQuality?.statsComplete === true ? 1 : 0;
 
@@ -3095,6 +3101,8 @@ function analyzeMatch(input) {
       hasRealStats,
       homeHasData,
       awayHasData,
+      statsComplete: hasRealStats,
+      statsPartial,
       dataSides
     },
 
