@@ -553,6 +553,342 @@ export default {
        * derniers matchs + scores
        */
 
+      /*
+       * =========================================================
+       * 📊 REAL TEAM STATS — FOOTBALL-DATA.ORG
+       * =========================================================
+       *
+       * Utilise directement l'ID Football-data.org présent
+       * dans le match (/fixtures).
+       *
+       * Retour :
+       * - 5 derniers matchs terminés
+       * - forme W/D/L
+       * - buts marqués
+       * - buts encaissés
+       *
+       * Cette fonction sert de fallback lorsque SoccerSAPI
+       * ne fournit pas les statistiques.
+       */
+
+      async function getFootballDataTeamStats(
+        teamName,
+        teamId,
+        env,
+        cache
+      ) {
+        console.log(
+          "===== GET FOOTBALL-DATA TEAM STATS CALLED =====",
+          JSON.stringify({
+            teamName,
+            teamId
+          })
+        );
+
+        if (!teamName || !teamId) {
+          return {
+            form: "",
+            goals: 0,
+            conceded: 0,
+            matches: 0,
+            hasData: false,
+            source: "football-data.org",
+            error: "Missing Football-data team ID"
+          };
+        }
+
+        if (!env.FOOTBALL_DATA_TOKEN) {
+          return {
+            form: "",
+            goals: 0,
+            conceded: 0,
+            matches: 0,
+            hasData: false,
+            source: "football-data.org",
+            error: "FOOTBALL_DATA_TOKEN is not configured"
+          };
+        }
+
+        const statsCacheKey =
+          `football-data-stats:${String(teamId)}`;
+
+        if (cache && cache.has(statsCacheKey)) {
+          return cache.get(statsCacheKey);
+        }
+
+        const today = new Date();
+        const fromDate = new Date(today);
+
+        /*
+         * 365 jours permettent de récupérer suffisamment
+         * de matchs même en début de saison.
+         */
+        fromDate.setDate(fromDate.getDate() - 365);
+
+        const dateFrom =
+          fromDate.toISOString().slice(0, 10);
+
+        const dateTo =
+          today.toISOString().slice(0, 10);
+
+        try {
+          const apiUrl =
+            `https://api.football-data.org/v4/teams/` +
+            `${encodeURIComponent(teamId)}/matches` +
+            `?status=FINISHED` +
+            `&dateFrom=${dateFrom}` +
+            `&dateTo=${dateTo}` +
+            `&limit=20`;
+
+          const response = await fetch(apiUrl, {
+            method: "GET",
+            headers: {
+              "X-Auth-Token": env.FOOTBALL_DATA_TOKEN,
+              "Accept": "application/json"
+            }
+          });
+
+          const text = await response.text();
+
+          console.log(
+            "===== FOOTBALL-DATA TEAM STATS TRACE =====",
+            JSON.stringify({
+              teamName,
+              teamId,
+              dateFrom,
+              dateTo,
+              status: response.status,
+              ok: response.ok,
+              response: text.slice(0, 700)
+            })
+          );
+
+          if (!response.ok) {
+            const result = {
+              form: "",
+              goals: 0,
+              conceded: 0,
+              matches: 0,
+              hasData: false,
+              source: "football-data.org",
+              error: `Football-data team matches ${response.status}`
+            };
+
+            if (cache) {
+              cache.set(statsCacheKey, result);
+            }
+
+            return result;
+          }
+
+          let data;
+
+          try {
+            data = JSON.parse(text);
+          } catch {
+            const result = {
+              form: "",
+              goals: 0,
+              conceded: 0,
+              matches: 0,
+              hasData: false,
+              source: "football-data.org",
+              error: "Invalid Football-data team matches JSON"
+            };
+
+            if (cache) {
+              cache.set(statsCacheKey, result);
+            }
+
+            return result;
+          }
+
+          const matches = Array.isArray(data.matches)
+            ? data.matches
+            : [];
+
+          const finishedMatches = matches
+            .filter(match => {
+              const score = match.score || {};
+
+              const fullTime = score.fullTime || {};
+
+              return (
+                match.status === "FINISHED" &&
+                Number.isFinite(Number(fullTime.home)) &&
+                Number.isFinite(Number(fullTime.away))
+              );
+            })
+            .sort(
+              (a, b) =>
+                new Date(b.utcDate).getTime() -
+                new Date(a.utcDate).getTime()
+            );
+
+          const recent = [];
+
+          for (const match of finishedMatches) {
+            if (recent.length >= 5) break;
+
+            const homeId =
+              Number(match.homeTeam?.id);
+
+            const awayId =
+              Number(match.awayTeam?.id);
+
+            const ownId =
+              Number(teamId);
+
+            const homeGoals =
+              Number(match.score?.fullTime?.home);
+
+            const awayGoals =
+              Number(match.score?.fullTime?.away);
+
+            if (
+              !Number.isFinite(homeId) ||
+              !Number.isFinite(awayId) ||
+              !Number.isFinite(homeGoals) ||
+              !Number.isFinite(awayGoals)
+            ) {
+              continue;
+            }
+
+            const isHome =
+              homeId === ownId;
+
+            const isAway =
+              awayId === ownId;
+
+            if (!isHome && !isAway) {
+              continue;
+            }
+
+            const teamGoals =
+              isHome ? homeGoals : awayGoals;
+
+            const teamConceded =
+              isHome ? awayGoals : homeGoals;
+
+            let resultLetter = "D";
+
+            if (teamGoals > teamConceded) {
+              resultLetter = "W";
+            } else if (teamGoals < teamConceded) {
+              resultLetter = "L";
+            }
+
+            const opponent =
+              isHome
+                ? (
+                    match.awayTeam?.shortName ||
+                    match.awayTeam?.name ||
+                    ""
+                  )
+                : (
+                    match.homeTeam?.shortName ||
+                    match.homeTeam?.name ||
+                    ""
+                  );
+
+            recent.push({
+              fixtureId: match.id,
+              date: match.utcDate,
+              opponent,
+              goals: teamGoals,
+              conceded: teamConceded,
+              result: resultLetter
+            });
+          }
+
+          if (!recent.length) {
+            const result = {
+              form: "",
+              goals: 0,
+              conceded: 0,
+              matches: 0,
+              hasData: false,
+              source: "football-data.org",
+              error: "No valid finished Football-data matches found",
+              footballDataTeamId: Number(teamId),
+              teamName
+            };
+
+            if (cache) {
+              cache.set(statsCacheKey, result);
+            }
+
+            return result;
+          }
+
+          let goals = 0;
+          let conceded = 0;
+          let form = "";
+
+          for (const recentMatch of recent) {
+            goals += Number(recentMatch.goals);
+            conceded += Number(recentMatch.conceded);
+            form += recentMatch.result;
+          }
+
+          const validMatches = recent.length;
+
+          const result = {
+            form,
+            goals: Number(
+              (goals / validMatches).toFixed(2)
+            ),
+            conceded: Number(
+              (conceded / validMatches).toFixed(2)
+            ),
+            matches: validMatches,
+            hasData: validMatches > 0,
+            source: "football-data.org",
+            footballDataTeamId: Number(teamId),
+            teamName,
+            recentMatches: recent
+          };
+
+          console.log(
+            "===== FOOTBALL-DATA TEAM STATS RESULT =====",
+            JSON.stringify({
+              teamName,
+              teamId,
+              form: result.form,
+              goals: result.goals,
+              conceded: result.conceded,
+              matches: result.matches
+            })
+          );
+
+          if (cache) {
+            cache.set(statsCacheKey, result);
+          }
+
+          return result;
+
+        } catch (error) {
+          const result = {
+            form: "",
+            goals: 0,
+            conceded: 0,
+            matches: 0,
+            hasData: false,
+            source: "football-data.org",
+            error:
+              error instanceof Error
+                ? error.message
+                : "Unknown Football-data statistics error"
+          };
+
+          if (cache) {
+            cache.set(statsCacheKey, result);
+          }
+
+          return result;
+        }
+      }
+
       async function searchSportMonksTeam(teamName, env, cache) {
         const name = String(teamName ?? "").trim();
 
@@ -1846,6 +2182,11 @@ export default {
         const competitionId =
           String(match.competition ?? "");
 
+        /*
+         * =====================================================
+         * 1️⃣ SOCCERSAPI
+         * =====================================================
+         */
         const soccerStats =
           await getSoccerSapiTeamStats(
             teamName,
@@ -1859,19 +2200,102 @@ export default {
         }
 
         console.log(
-          "===== SOCCERSAPI FALLBACK SPORTMONKS =====",
+          "===== SOCCERSAPI FALLBACK FOOTBALL-DATA =====",
           JSON.stringify({
             teamName,
             competitionId,
-            reason: soccerStats.error || "No SoccerSAPI data"
+            reason:
+              soccerStats.error ||
+              "No SoccerSAPI data"
           })
         );
 
-        return await getSportMonksTeamStats(
-          teamName,
-          env,
-          cache
+        /*
+         * =====================================================
+         * 2️⃣ FOOTBALL-DATA.ORG
+         * =====================================================
+         *
+         * Les IDs proviennent directement de /fixtures.
+         */
+        const footballDataTeamId =
+          String(
+            teamName === match.homeTeam
+              ? match.homeTeamId ?? ""
+              : match.awayTeamId ?? ""
+          );
+
+        const footballStats =
+          await getFootballDataTeamStats(
+            teamName,
+            footballDataTeamId,
+            env,
+            cache
+          );
+
+        if (footballStats.hasData) {
+          console.log(
+            "===== FOOTBALL-DATA REAL STATS FOUND =====",
+            JSON.stringify({
+              teamName,
+              footballDataTeamId,
+              form: footballStats.form,
+              goals: footballStats.goals,
+              conceded: footballStats.conceded,
+              matches: footballStats.matches
+            })
+          );
+
+          return footballStats;
+        }
+
+        console.log(
+          "===== FOOTBALL-DATA FALLBACK SPORTMONKS =====",
+          JSON.stringify({
+            teamName,
+            footballDataTeamId,
+            reason:
+              footballStats.error ||
+              "No Football-data statistics"
+          })
         );
+
+        /*
+         * =====================================================
+         * 3️⃣ SPORTMONKS
+         * =====================================================
+         */
+        const sportMonksStats =
+          await getSportMonksTeamStats(
+            teamName,
+            env,
+            cache
+          );
+
+        if (sportMonksStats.hasData) {
+          return sportMonksStats;
+        }
+
+        /*
+         * =====================================================
+         * 4️⃣ AUCUNE DONNÉE
+         * =====================================================
+         */
+        return {
+          form: "",
+          goals: 0,
+          conceded: 0,
+          matches: 0,
+          hasData: false,
+          source: "none",
+          error:
+            [
+              footballStats.error,
+              sportMonksStats.error
+            ]
+              .filter(Boolean)
+              .join(" | ") ||
+            "No real team statistics found"
+        };
       }
 
       async function enrichMatchWithRealStats(match, env, cache) {
